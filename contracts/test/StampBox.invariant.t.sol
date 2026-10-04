@@ -124,9 +124,7 @@ contract StampBoxInvariantTest is Test {
 
     /// @notice Lifetime counters reconcile with the escrowed balance.
     function invariant_totalsReconcile() public view {
-        assertEq(
-            box.totalSent() - box.totalRefunded() - box.totalKept() - box.totalReclaimed(), address(box).balance
-        );
+        assertEq(box.totalSent() - box.totalRefunded() - box.totalKept() - box.totalReclaimed(), address(box).balance);
     }
 
     /// @notice Every stamp is indexed exactly once in its receiver's inbox and sender's outbox.
