@@ -1,0 +1,18 @@
+{
+  "name": "@stamp/contracts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "StampBox: refundable paid inbox contract (Foundry)",
+  "license": "MIT",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "coverage": "forge coverage --no-match-coverage test/",
+    "snapshot": "forge snapshot",
+    "abi": "node scripts/export-abi.mjs"
+  },
+  "exports": {
+    "./deployments/*": "./deployments/*",
+    "./abi": "./abi/StampBox.json"
+  }
+}

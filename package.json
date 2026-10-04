@@ -1,0 +1,17 @@
+{
+  "name": "stamp",
+  "private": true,
+  "description": "A refundable paid inbox on Arc",
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter contracts build && pnpm --filter web build",
+    "test": "pnpm --filter contracts test && pnpm --filter web typecheck && pnpm --filter web lint",
+    "lint": "pnpm --filter web lint",
+    "abi": "pnpm --filter contracts abi"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "packageManager": "pnpm@11.6.0"
+}
