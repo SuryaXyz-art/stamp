@@ -1,0 +1,15 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+contracts/broadcast/**/dry-run/
+
+# node / next
+node_modules/
+.next/
+.vercel/
