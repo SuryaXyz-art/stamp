@@ -25,7 +25,9 @@ const scenes: { from: string; message: string; status: StampStatus; outcome: str
 export function HeroDemo() {
   const reduce = useReducedMotion();
   const [scene, setScene] = useState(0);
-  const [stage, setStage] = useState<"arrive" | "pending" | "settled">(reduce ? "settled" : "arrive");
+  const [animStage, setStage] = useState<"arrive" | "pending" | "settled">("arrive");
+  // Derived (not initial state) so server and client render the same markup before reduced-motion is known.
+  const stage = reduce ? "settled" : animStage;
 
   useEffect(() => {
     if (reduce) return;
