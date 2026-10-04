@@ -4,6 +4,7 @@ import { Keyboard, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
+import { OwedBanner } from "@/components/owed-banner";
 import { EmptyState } from "@/components/stamp/empty-state";
 import { MoneyBurst } from "@/components/stamp/money-burst";
 import { StatCard } from "@/components/stat-card";
@@ -171,6 +172,8 @@ export function InboxDashboard() {
           </Button>
         </div>
       </div>
+
+      <OwedBanner />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         <StatCard label="Pending" value={formatUsdc(sum(groups.pending))} loading={isLoading} />

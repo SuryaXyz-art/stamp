@@ -12,6 +12,9 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 ///         interface (6 decimals) is never used here.
 ///         Message and reply text live only in event logs; storage holds settlement state.
 ///         If `msg.value` exceeds the receiver's price, the whole `msg.value` is the stamp.
+///         Refund/reclaim payouts never block settlement: if the recipient can't receive USDC
+///         (a contract without `receive`, a blocklisted address, a gas-hungry fallback), the amount is
+///         credited to `owed[recipient]` and can be pulled later with `withdraw()` / `withdrawTo()`.
 contract StampBox is ReentrancyGuard {
     enum Status {
         Pending,
@@ -31,6 +34,9 @@ contract StampBox is ReentrancyGuard {
     uint256 public constant TIMEOUT = 7 days;
     uint256 public constant MAX_MESSAGE_BYTES = 1000;
     uint256 public constant MAX_BIO_BYTES = 160;
+    /// @notice Gas forwarded to refund/reclaim recipients. Enough for smart-contract wallets, bounded so a
+    ///         gas-burning fallback can't grief the receiver; anything that fails is deferred to `owed`.
+    uint256 public constant PAYOUT_GAS = 100_000;
 
     /// @notice Stamp price per receiver, in native USDC wei. 0 = inbox closed.
     mapping(address => uint256) public priceOf;
@@ -47,10 +53,17 @@ contract StampBox is ReentrancyGuard {
     uint256 public totalKept;
     uint256 public totalReclaimed;
 
+    /// @notice USDC a recipient couldn't receive at settlement time, claimable via `withdraw()`.
+    mapping(address => uint256) public owed;
+    /// @notice Sum of all `owed` balances. Invariant: balance == sum(Pending amounts) + totalOwed.
+    uint256 public totalOwed;
+
     event InboxOpened(address indexed user, uint256 price, string bio);
     event PriceSet(address indexed user, uint256 price);
     event Sent(uint256 indexed id, address indexed from, address indexed to, uint256 amount, string message);
     event Settled(uint256 indexed id, address indexed by, Status status, string reply);
+    event PaymentDeferred(uint256 indexed id, address indexed to, uint256 amount);
+    event Withdrawn(address indexed account, address indexed to, uint256 amount);
 
     error InboxClosed();
     error StampTooSmall();
@@ -65,6 +78,7 @@ contract StampBox is ReentrancyGuard {
     error InvalidPrice();
     error BioTooLong();
     error InvalidId();
+    error NothingOwed();
 
     // ───────────────────────────── Receiver setup ─────────────────────────────
 
@@ -146,23 +160,36 @@ contract StampBox is ReentrancyGuard {
         s.status = Status.Reclaimed;
         totalReclaimed += amount;
         emit Settled(id, msg.sender, Status.Reclaimed, "");
-        _pay(msg.sender, amount);
+        _payOrDefer(id, msg.sender, amount);
     }
 
-    /// @notice Refund many stamps at once (no reply text). All-or-nothing.
+    /// @notice Refund many stamps at once (no reply text). Every stamp settles; a payout a sender
+    ///         can't receive is deferred to `owed` instead of blocking the batch. Reverts only on
+    ///         invalid, foreign or already-settled ids.
     function batchRefund(uint256[] calldata ids) external nonReentrant {
         for (uint256 i; i < ids.length; ++i) {
             _refund(ids[i], "");
         }
     }
 
-    /// @notice Keep many stamps at once (spam sweep). Pays out once at the end. All-or-nothing.
+    /// @notice Keep many stamps at once (spam sweep). Pays out once at the end. All-or-nothing:
+    ///         the receiver is msg.sender, so a failed payout simply reverts.
     function batchKeep(uint256[] calldata ids) external nonReentrant {
         uint256 total;
         for (uint256 i; i < ids.length; ++i) {
             total += _markKept(ids[i]);
         }
         _pay(msg.sender, total);
+    }
+
+    /// @notice Pull USDC that couldn't be pushed to you at settlement time.
+    function withdraw() external nonReentrant {
+        _withdraw(msg.sender);
+    }
+
+    /// @notice Same as `withdraw()`, but sends to another address (e.g. for a contract that can't receive USDC).
+    function withdrawTo(address to) external nonReentrant {
+        _withdraw(to);
     }
 
     // ────────────────────────────────── Views ─────────────────────────────────
@@ -211,7 +238,7 @@ contract StampBox is ReentrancyGuard {
         totalRefunded += amount;
         // forge-lint: disable-next-line(reentrancy-events) -- callers are nonReentrant
         emit Settled(id, msg.sender, Status.Refunded, reply);
-        _pay(s.from, amount);
+        _payOrDefer(id, s.from, amount);
     }
 
     function _keep(uint256 id) internal {
@@ -228,9 +255,35 @@ contract StampBox is ReentrancyGuard {
         emit Settled(id, msg.sender, Status.Kept, "");
     }
 
+    function _withdraw(address to) internal {
+        uint256 amount = owed[msg.sender];
+        if (amount == 0) revert NothingOwed();
+        owed[msg.sender] = 0;
+        totalOwed -= amount;
+        emit Withdrawn(msg.sender, to, amount);
+        _pay(to, amount);
+    }
+
+    /// @dev Push `amount` to `to` with a bounded gas stipend; on failure credit `owed[to]` instead of reverting.
+    function _payOrDefer(uint256 id, address to, uint256 amount) internal {
+        // Assembly call with zero return-data copy: a hostile recipient can't "return-bomb" the receiver.
+        // Recipient comes from stored stamp state; callers are nonReentrant and already applied CEI.
+        bool ok;
+        assembly ("memory-safe") {
+            ok := call(PAYOUT_GAS, to, amount, 0, 0, 0, 0)
+        }
+        if (!ok) {
+            owed[to] += amount;
+            totalOwed += amount;
+            // forge-lint: disable-next-line(reentrancy-events) -- callers are nonReentrant
+            emit PaymentDeferred(id, to, amount);
+        }
+    }
+
+    /// @dev Strict push used where the recipient chose to be paid (keep / withdraw): failure reverts.
     function _pay(address to, uint256 amount) internal {
         // Every caller is nonReentrant and has already written its state change (CEI).
-        // Recipients come from stored stamp state or msg.sender, never from calldata.
+        // Recipients are msg.sender, or a withdrawTo target msg.sender chose for their own funds.
         // forge-lint: disable-next-line(arbitrary-send-eth, reentrancy-eth, calls-loop)
         (bool ok,) = to.call{value: amount}("");
         if (!ok) revert TransferFailed();

@@ -3,6 +3,7 @@
 import { Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
+import { OwedBanner } from "@/components/owed-banner";
 import { EmptyState } from "@/components/stamp/empty-state";
 import { EnvelopeCard } from "@/components/stamp/envelope-card";
 import { StatCard } from "@/components/stat-card";
@@ -59,6 +60,7 @@ export function SentDashboard() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
       <h1 className="font-serif text-4xl sm:text-5xl">Sent</h1>
       <p className="mt-1 text-sm text-muted-foreground">Unanswered stamps can be reclaimed 7 days after sending.</p>
+      <OwedBanner />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
         <StatCard label="Awaiting reply" value={formatUsdc(sum(pending))} loading={isLoading} />

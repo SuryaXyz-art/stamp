@@ -133,22 +133,22 @@ contract ReentrancyTest is Test {
         assertEq(uint8(box.getStamp(id).status), uint8(StampBox.Status.Refunded));
     }
 
-    function test_maliciousSender_propagatedRevertRollsBack() public {
+    function test_maliciousSender_revertingReentryIsDeferred() public {
         vm.prank(alice);
         box.openInbox(1 ether, "");
         MaliciousSender evil = new MaliciousSender(box);
         evil.send{value: 1 ether}(alice);
-        evil.setPropagate(true);
+        evil.setPropagate(true); // receive() re-enters and bubbles the guard's revert
         uint256 id = evil.id();
 
-        vm.expectRevert(StampBox.TransferFailed.selector);
+        vm.expectEmit(address(box));
+        emit StampBox.PaymentDeferred(id, address(evil), 1 ether);
         vm.prank(alice);
         box.refund(id, "");
 
-        // State unchanged; receiver can still mark it spam.
-        assertEq(uint8(box.getStamp(id).status), uint8(StampBox.Status.Pending));
-        vm.prank(alice);
-        box.keep(id);
-        assertEq(address(box).balance, 0);
+        // Settlement isn't blocked: the stamp is refunded and the USDC is owed to the sender.
+        assertEq(uint8(box.getStamp(id).status), uint8(StampBox.Status.Refunded));
+        assertEq(box.owed(address(evil)), 1 ether);
+        assertEq(address(box).balance, 1 ether);
     }
 }

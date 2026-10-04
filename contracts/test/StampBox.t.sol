@@ -237,20 +237,32 @@ contract StampBoxTest is Test {
         vm.stopPrank();
     }
 
-    function test_revert_refund_senderCannotReceive() public {
-        // A contract sender with no receive() cannot be refunded; the receiver can still keep it.
+    function test_refund_senderCannotReceive_isDeferred() public {
+        // A contract sender with no receive() can't be paid now; the refund still settles and is owed to it.
         NoReceive sender = new NoReceive();
         vm.deal(address(sender), 1 ether);
         vm.prank(address(sender));
         uint256 id = box.send{value: PRICE}(alice, "hi");
 
-        vm.expectRevert(StampBox.TransferFailed.selector);
         vm.prank(alice);
         box.refund(id, "");
+        assertEq(uint8(box.getStamp(id).status), uint8(StampBox.Status.Refunded));
+        assertEq(box.owed(address(sender)), PRICE);
+        assertEq(address(box).balance, PRICE);
+    }
 
-        vm.prank(alice);
+    function test_revert_keep_receiverCannotReceive() public {
+        // keep stays strict: the receiver is msg.sender, so a failed payout reverts and nothing changes.
+        NoReceive receiver = new NoReceive();
+        vm.prank(address(receiver));
+        box.openInbox(PRICE, "");
+        vm.prank(bob);
+        uint256 id = box.send{value: PRICE}(address(receiver), "hi");
+
+        vm.expectRevert(StampBox.TransferFailed.selector);
+        vm.prank(address(receiver));
         box.keep(id);
-        assertEq(alice.balance, PRICE);
+        assertEq(uint8(box.getStamp(id).status), uint8(StampBox.Status.Pending));
     }
 
     // ────────────────────────────────── Keep ──────────────────────────────────

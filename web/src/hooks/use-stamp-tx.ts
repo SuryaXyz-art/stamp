@@ -10,7 +10,7 @@ import { toFriendlyError } from "@/lib/errors";
 import { useStampBox } from "./use-stampbox";
 
 type WriteArgs = {
-  functionName: "send" | "refund" | "keep" | "reclaim" | "batchKeep" | "batchRefund" | "openInbox" | "setPrice" | "closeInbox";
+  functionName: "send" | "refund" | "keep" | "reclaim" | "batchKeep" | "batchRefund" | "openInbox" | "setPrice" | "closeInbox" | "withdraw";
   args?: readonly unknown[];
   value?: bigint;
   /** Toast copy */

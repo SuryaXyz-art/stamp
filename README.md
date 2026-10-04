@@ -95,13 +95,14 @@ stateDiagram-v2
 **Non-custodial, immutable, no admin keys.**
 
 - No owner, no admin functions, no fees, no pause, no upgradeability, no proxy. Nobody, including me, can move funds except through the rules below.
-- Funds held by the contract always equal the sum of `Pending` stamps. This is a fuzzed invariant, along with `sent − refunded − kept − reclaimed == balance`.
+- Funds held by the contract always equal the sum of `Pending` stamps plus deferred payouts (`totalOwed`). This is a fuzzed invariant, along with `sent − refunded − kept − reclaimed + owed == balance`.
 - Only the **receiver** can `refund` or `keep`. Only the **sender** can `reclaim`, and only after `TIMEOUT` (7 days) while still `Pending`. Every stamp settles exactly once.
 - Checks-effects-interactions on every payout, plus OpenZeppelin `ReentrancyGuard`. Tests include malicious receiver and sender contracts that attempt re-entry and are blocked.
-- Custom errors for every failure (`InboxClosed`, `StampTooSmall`, `NotReceiver`, `NotSender`, `TooEarly`, `AlreadySettled`, `TransferFailed`, `MessageTooLong`, …).
+- Custom errors for every failure (`InboxClosed`, `StampTooSmall`, `NotReceiver`, `NotSender`, `TooEarly`, `AlreadySettled`, `TransferFailed`, `MessageTooLong`, `NothingOwed`, …).
 - **Overpaying:** if `msg.value` exceeds the receiver's price, the whole `msg.value` is the stamp and is refunded or kept in full.
 - **Price changes** never affect stamps already sent; each stamp stores its own amount.
-- **Batch actions are all-or-nothing.** If one sender in a `batchRefund` can't receive USDC (e.g. a contract without `receive()`, or a Circle-blocklisted address), the batch reverts. Refund the rest individually and `keep` the stuck one.
+- **A sender who can't receive USDC never blocks settlement.** Refund and reclaim payouts are pushed with a bounded gas stipend (`PAYOUT_GAS` = 100k) through a call that doesn't copy return data. If the push fails (a contract without `receive()`, a Circle-blocklisted address, a gas-burning or return-bombing fallback), the stamp still settles, the amount is credited to `owed[sender]`, and `PaymentDeferred` is emitted. The sender pulls it later with `withdraw()`, or `withdrawTo(addr)` for a contract that can't receive at all. The app shows a "You have $X to withdraw" banner.
+- `batchRefund` settles every stamp even if some payouts are deferred. `keep` / `batchKeep` stay strict: the receiver is `msg.sender`, so a failed payout simply reverts.
 
 ### Limitations (read these)
 
@@ -132,16 +133,16 @@ No `.env` needed: the app defaults to the public Arc RPCs and the deployed contr
 
 ```bash
 cd contracts
-forge test -vv                                   # 57 tests: unit, fuzz, reentrancy, invariants
+forge test -vv                                   # 70 tests: unit, fuzz, reentrancy, payout-failure, invariants
 forge coverage --no-match-coverage "test/"       # 100% lines / statements / branches / functions
 forge snapshot                                   # gas snapshot in .gas-snapshot
 ```
 
 | File | Lines | Statements | Branches | Functions |
 |---|---|---|---|---|
-| `src/StampBox.sol` | 100% (95/95) | 100% (109/109) | 100% (20/20) | 100% (21/21) |
+| `src/StampBox.sol` | 100% (113/113) | 100% (124/124) | 100% (22/22) | 100% (25/25) |
 
-Gas (median): `send` 188k · `refund` 73k · `keep` 68k · `reclaim` 68k · `openInbox` 70k.
+Gas (median): `send` 188k · `refund` 74k · `keep` 68k · `reclaim` 68k · `withdraw` 29k · `openInbox` 70k.
 
 ## Deploying your own
 

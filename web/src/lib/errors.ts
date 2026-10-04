@@ -17,6 +17,7 @@ const revertMessages: Record<string, string> = {
   InvalidPrice: "The price must be more than $0.",
   BioTooLong: "Keep your headline under 160 characters.",
   InvalidId: "That stamp doesn't exist.",
+  NothingOwed: "There's nothing waiting for you to withdraw.",
   ReentrancyGuardReentrantCall: "Something tried to call the contract twice at once. Please retry.",
 };
 

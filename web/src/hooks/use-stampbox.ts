@@ -132,6 +132,17 @@ export function useStats() {
   });
 }
 
+/** USDC a refund/reclaim couldn't push to `user` (e.g. their wallet rejected it), claimable via withdraw(). */
+export function useOwed(user: Address | undefined) {
+  const { client, address, key } = useStampBox();
+  return useQuery({
+    queryKey: ["owed", key, user],
+    enabled: Boolean(client && address && user),
+    refetchInterval: 30_000,
+    queryFn: () => client!.readContract({ address: address!, abi: stampBoxAbi, functionName: "owed", args: [user!] }),
+  });
+}
+
 /** Optimistically patch a stamp's status in every cached list; returns a rollback. */
 export function useOptimisticStamps() {
   const qc = useQueryClient();
