@@ -13,3 +13,4 @@ contracts/broadcast/**/dry-run/
 node_modules/
 .next/
 .vercel/
+contracts/broadcast/**/*.lock
