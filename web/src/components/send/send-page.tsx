@@ -44,7 +44,7 @@ export function SendPage({ to }: { to: Address }) {
   const { switchChain, isPending: switching } = useSwitchChain();
   const { run, busy } = useStampTx();
   const reduce = useReducedMotion();
-  const ids = { message: useId(), contact: useId(), counter: useId(), warning: useId() };
+  const ids = { message: useId(), contact: useId(), contactHint: useId(), counter: useId(), warning: useId() };
 
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
@@ -258,15 +258,21 @@ export function SendPage({ to }: { to: Address }) {
 
             <div className="mt-4 space-y-2">
               <Label htmlFor={ids.contact} className="text-sm font-medium">
-                Reply-to contact <span className="font-normal text-muted-foreground">(optional)</span>
+                Reply-to contact <span className="font-normal text-muted-foreground">(optional, published with your message)</span>
               </Label>
               <Input
                 id={ids.contact}
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder="you@email.com, @handle on X, or t.me/you"
+                placeholder="@handle on X, or t.me/you"
                 className="h-10 rounded-xl bg-background"
+                aria-describedby={ids.contactHint}
               />
+              <p id={ids.contactHint} className={cn("text-xs", contact.trim() ? "text-amber" : "text-muted-foreground")}>
+                {contact.trim()
+                  ? "Anyone can read this on-chain, forever, and scrapers do. Prefer a public handle over your email or phone number."
+                  : "Anything you put here becomes public on-chain. A public handle is safer than an email address."}
+              </p>
             </div>
 
             <div className="mt-3 flex items-start justify-between gap-4 text-xs">

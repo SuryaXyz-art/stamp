@@ -2,16 +2,18 @@
 
 import { Undo2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useAccount } from "wagmi";
 import { OwedBanner } from "@/components/owed-banner";
 import { EmptyState } from "@/components/stamp/empty-state";
 import { EnvelopeCard } from "@/components/stamp/envelope-card";
+import { LoadOlder } from "@/components/stamp/load-older";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNow } from "@/hooks/use-now";
 import { useStampTx } from "@/hooks/use-stamp-tx";
-import { useMailbox, useOptimisticStamps, type StampItem } from "@/hooks/use-stampbox";
+import { MAILBOX_PAGE, useMailbox, useMailboxCount, useOptimisticStamps, type StampItem } from "@/hooks/use-stampbox";
 import { DEMO_INBOX } from "@/lib/config";
 import { formatCountdown, formatUsdc } from "@/lib/format";
 
@@ -37,7 +39,9 @@ function ReclaimButton({ item, now, onReclaim, busy }: { item: StampItem; now: n
 
 export function SentDashboard() {
   const { address } = useAccount();
-  const { data, isLoading, isError, refetch } = useMailbox("outbox", address);
+  const [limit, setLimit] = useState(MAILBOX_PAGE);
+  const { data, isLoading, isError, isPlaceholderData, refetch } = useMailbox("outbox", address, limit);
+  const { data: total } = useMailboxCount("outbox", address);
   const { run, busy } = useStampTx();
   const optimistic = useOptimisticStamps();
   const now = useNow();
@@ -104,6 +108,9 @@ export function SentDashboard() {
             actions={item.status === "pending" ? <ReclaimButton item={item} now={now} busy={busy} onReclaim={() => reclaim(item)} /> : undefined}
           />
         ))}
+        {!isLoading && !isError && (
+          <LoadOlder shown={items.length} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
+        )}
       </div>
     </div>
   );

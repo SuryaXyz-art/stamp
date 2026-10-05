@@ -1,8 +1,26 @@
 # Stamp v2: audit and plan
 
-Status: **draft, waiting for approval** · Branch: `feat/v2-enhancements` · Baseline: `27bd68d` (StampBox v1 on Arc Testnet at `0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B`, start block 65630121)
+Status: **decision-free items done (see §0); the rest waits on the decisions in §4** · Branch: `feat/v2-enhancements` · Baseline: `27bd68d` (StampBox v1 on Arc Testnet at `0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B`, start block 65630121)
 
 Baseline checks on this commit: `forge test` 70/70 passing, web typecheck and lint clean. `pnpm audit --prod` reports **5 transitive vulnerabilities (2 high, 3 moderate)**.
+
+---
+
+## 0. Progress
+
+Done without needing any decision (branch `feat/v2-enhancements`):
+
+| Audit item | What shipped |
+|---|---|
+| S2 security headers | Nonce-based CSP per request (`web/src/proxy.ts`, `web/src/lib/security-headers.ts`), HSTS, `X-Frame-Options: DENY`, nosniff, Referrer-Policy, COOP, Permissions-Policy, no `X-Powered-By`. Verified in headless Chrome: every page hydrates with zero CSP violations, the Arc RPC is reachable and other hosts are blocked. Trade-off: nonces make every page server-rendered (no static HTML or CDN page cache). |
+| S3 vulnerable deps | pnpm overrides for `ws` and `uuid`. `braces` (no patched release; dev-only) and `decode-uri-component` (the fix breaks `query-string`) are accepted and documented in SECURITY.md. `pnpm audit` is clean apart from those two. |
+| S4 supply chain | Exact dependency versions, `shadcn` moved to devDependencies, `pnpm audit` + Vitest in CI, SHA-pinned actions with read-only permissions, CodeQL + gitleaks workflow, Dependabot. |
+| S5 policies | `SECURITY.md`, `PRIVACY.md`, `/privacy` page linked from the footer. |
+| S1 contact leak (mitigation) | The reply-to field now says it's published, suggests a handle instead of an email, and turns amber once filled. The real fix is E2EE (D4/D5). |
+| UX / a11y | "Reclaimed" inbox tab; "Load older" pages beyond 200 stamps on Inbox and Sent; `?` shortcuts dialog (replaces a tooltip screen readers couldn't reach); the inbox announces only the pending count instead of the whole list on every refetch; the reply form respects reduced motion. |
+| Tests | Vitest unit tests for the CSP builder and money/text formatting. |
+
+Not started because they need a decision, keys or a deploy: everything in Phases 1–5 that touches auth, the database, E2EE, contract v2, notifications, the domain or paid services.
 
 ---
 
@@ -39,7 +57,7 @@ Baseline checks on this commit: `forge test` 70/70 passing, web typecheck and li
 - **No notifications.** A receiver only finds out about new stamps by opening `/inbox` (15s polling). Stamps can expire into reclaims unnoticed, which defeats the product.
 - **The inbox is a flat list**, capped at the latest 200 stamps (`PAGE = 200n`). There are no threads, search, filters (beyond status tabs) or sorting, and no "load more". `reclaimed` has no tab of its own (it only shows under "all").
 - **Keyboard:** `j/k/x/r/s/Esc` exist, but `?` help doesn't, and the shortcut tooltip is hidden on mobile (fine) and isn't announced to screen readers.
-- **Sender view:** no countdown to reclaim eligibility on the list, and no earnings/history charts.
+- **Sender view:** the reclaim countdown exists, but there are no earnings/history charts or CSV export.
 - **The demo inbox is unset** (`DEFAULT_DEMO_INBOX = ""`), so the landing page's "Try the demo inbox" CTA can't work without an env var.
 - **Placeholders:** `SITE_URL` defaults to `stamp-arc.vercel.app` and `REPO_URL` to a GitHub repo that doesn't exist yet. The README hero GIF and video are missing.
 - No PWA manifest, no i18n, no onboarding progress persistence.
@@ -58,7 +76,7 @@ Gaps: the whole inbox list is `aria-live="polite"` (too chatty: it announces eve
 
 ### 1.6 Code health
 
-- 10 shadcn components import `cn` from the npm package `cn` (shadcn's own package) while the rest of the app uses `@/lib/utils`. That's two class-merge implementations; standardise on one.
+- shadcn components import `cn` straight from shadcn's `cn` package, while app code goes through `@/lib/utils`, which re-exports the same function. One implementation, two import paths: cosmetic only.
 - `shadcn` (the CLI) is a runtime `dependency`; it should be a devDependency.
 - No web unit or e2e tests at all (only contract tests).
 

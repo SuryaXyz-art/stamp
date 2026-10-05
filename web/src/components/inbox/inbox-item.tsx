@@ -1,7 +1,7 @@
 "use client";
 
 import { Reply, Trash2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { EnvelopeCard } from "@/components/stamp/envelope-card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export function InboxItem({ index, item, focused, selected, onSelect, replying, 
   const replyId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pending = item.status === "pending";
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (replying) textareaRef.current?.focus();
@@ -68,10 +69,10 @@ export function InboxItem({ index, item, focused, selected, onSelect, replying, 
       <AnimatePresence initial={false}>
         {pending && replying && (
           <motion.form
-            initial={{ height: 0, opacity: 0 }}
+            initial={reduce ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { height: 0, opacity: 0 }}
+            transition={{ duration: reduce ? 0 : 0.2 }}
             className="overflow-hidden"
             onSubmit={(e) => {
               e.preventDefault();

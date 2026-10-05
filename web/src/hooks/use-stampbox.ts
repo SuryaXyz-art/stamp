@@ -21,8 +21,8 @@ export type StampItem = {
   settledTx?: `0x${string}`;
 };
 
-/** How many of the most recent stamps an inbox/outbox view loads. */
-const PAGE = 200n;
+/** How many of the most recent stamps an inbox/outbox view loads at a time ("Load older" adds another page). */
+export const MAILBOX_PAGE = 200;
 
 export function useStampBox() {
   const net = useNetwork();
@@ -62,20 +62,44 @@ async function loadStamps(client: PublicClient, address: Address, startBlock: bi
   }));
 }
 
-export function useMailbox(kind: "inbox" | "outbox", user: Address | undefined) {
+/** The newest `limit` stamps in a user's inbox or outbox, newest first. */
+export function useMailbox(kind: "inbox" | "outbox", user: Address | undefined, limit = MAILBOX_PAGE) {
   const { client, address, startBlock, key } = useStampBox();
   return useQuery({
-    queryKey: ["mailbox", key, kind, user],
+    queryKey: ["mailbox", key, kind, user, limit],
     enabled: Boolean(client && address && user),
     refetchInterval: 15_000,
+    // Keep showing the current list while "Load older" fetches a bigger one, but never across accounts or networks.
+    placeholderData: (prev, prevQuery) => {
+      const [, k, kd, u] = prevQuery?.queryKey ?? [];
+      return k === key && kd === kind && u === user ? prev : undefined;
+    },
     queryFn: async () => {
       const countFn = kind === "inbox" ? "inboxCount" : "outboxCount";
       const listFn = kind === "inbox" ? "inboxOf" : "outboxOf";
       const count = await client!.readContract({ address: address!, abi: stampBoxAbi, functionName: countFn, args: [user!] });
-      const offset = count > PAGE ? count - PAGE : 0n;
-      const ids = await client!.readContract({ address: address!, abi: stampBoxAbi, functionName: listFn, args: [user!, offset, PAGE] });
+      const size = BigInt(limit);
+      const offset = count > size ? count - size : 0n;
+      const ids = await client!.readContract({ address: address!, abi: stampBoxAbi, functionName: listFn, args: [user!, offset, size] });
       return loadStamps(client!, address!, startBlock, [...ids].reverse()); // newest first
     },
+  });
+}
+
+/** Total stamps in a user's inbox or outbox, so views know whether older ones exist. */
+export function useMailboxCount(kind: "inbox" | "outbox", user: Address | undefined) {
+  const { client, address, key } = useStampBox();
+  return useQuery({
+    queryKey: ["mailboxCount", key, kind, user],
+    enabled: Boolean(client && address && user),
+    refetchInterval: 15_000,
+    queryFn: () =>
+      client!.readContract({
+        address: address!,
+        abi: stampBoxAbi,
+        functionName: kind === "inbox" ? "inboxCount" : "outboxCount",
+        args: [user!],
+      }),
   });
 }
 

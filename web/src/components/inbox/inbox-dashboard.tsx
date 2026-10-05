@@ -12,20 +12,24 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LoadOlder } from "@/components/stamp/load-older";
 import { useStampTx } from "@/hooks/use-stamp-tx";
-import { useInboxInfo, useMailbox, useOptimisticStamps, type StampItem } from "@/hooks/use-stampbox";
+import { MAILBOX_PAGE, useInboxInfo, useMailbox, useMailboxCount, useOptimisticStamps, type StampItem } from "@/hooks/use-stampbox";
 import { formatStampPrice, formatUsdc } from "@/lib/format";
 import { InboxItem } from "./inbox-item";
 import { InboxSettings } from "./inbox-settings";
+import { ShortcutsDialog } from "./shortcuts-dialog";
 
-type Tab = "pending" | "refunded" | "kept" | "all";
+type Tab = "pending" | "refunded" | "kept" | "reclaimed" | "all";
+const TABS: Tab[] = ["pending", "refunded", "kept", "reclaimed", "all"];
 
 const sum = (items: StampItem[]) => items.reduce((a, s) => a + s.amount, 0n);
 
 export function InboxDashboard() {
   const { address } = useAccount();
-  const { data: items, isLoading, isError, refetch } = useMailbox("inbox", address);
+  const [limit, setLimit] = useState(MAILBOX_PAGE);
+  const { data: items, isLoading, isError, isPlaceholderData, refetch } = useMailbox("inbox", address, limit);
+  const { data: total } = useMailboxCount("inbox", address);
   const { data: info } = useInboxInfo(address);
   const optimistic = useOptimisticStamps();
   const { run, busy } = useStampTx();
@@ -36,6 +40,7 @@ export function InboxDashboard() {
   const [replyingTo, setReplyingTo] = useState<bigint | null>(null);
   const [celebrate, setCelebrate] = useState<bigint | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const all = useMemo(() => items ?? [], [items]);
@@ -44,6 +49,7 @@ export function InboxDashboard() {
       pending: all.filter((s) => s.status === "pending"),
       refunded: all.filter((s) => s.status === "refunded"),
       kept: all.filter((s) => s.status === "kept"),
+      reclaimed: all.filter((s) => s.status === "reclaimed"),
       all,
     }),
     [all],
@@ -81,13 +87,16 @@ export function InboxDashboard() {
     [all, optimistic, run],
   );
 
-  // Keyboard: J/K move, X select, R reply & refund, S spam, Esc closes the reply box.
+  // Keyboard: J/K move, X select, R reply & refund, S spam, Esc closes the reply box, ? shows help.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, [contenteditable], [role=dialog]") || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (t?.closest("input, textarea, [contenteditable], [role=dialog]") || e.metaKey || e.ctrlKey || e.altKey) return;
       const key = e.key.toLowerCase();
-      if (key === "j" || key === "arrowdown") {
+      if (key === "?") {
+        e.preventDefault();
+        setHelpOpen(true);
+      } else if (key === "j" || key === "arrowdown") {
         e.preventDefault();
         setFocus((f) => Math.min(f + 1, visible.length - 1));
       } else if (key === "k" || key === "arrowup") {
@@ -157,16 +166,16 @@ export function InboxDashboard() {
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Keyboard shortcuts" className="hidden sm:inline-flex">
-                <Keyboard aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs leading-relaxed">
-              <kbd>J</kbd>/<kbd>K</kbd> move · <kbd>X</kbd> select · <kbd>R</kbd> reply &amp; refund · <kbd>S</kbd> spam · <kbd>Esc</kbd> close
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Keyboard shortcuts"
+            aria-keyshortcuts="Shift+?"
+            className="hidden sm:inline-flex"
+            onClick={() => setHelpOpen(true)}
+          >
+            <Keyboard aria-hidden="true" />
+          </Button>
           <Button variant="outline" onClick={() => setSettingsOpen(true)} className="rounded-xl">
             <Settings2 aria-hidden="true" /> Settings
           </Button>
@@ -193,7 +202,7 @@ export function InboxDashboard() {
         className="mt-10"
       >
         <TabsList className="h-10 w-full rounded-xl bg-muted p-1 sm:w-auto">
-          {(["pending", "refunded", "kept", "all"] as Tab[]).map((t) => (
+          {TABS.map((t) => (
             <TabsTrigger key={t} value={t} className="rounded-lg px-3 capitalize data-[state=active]:bg-card">
               {t} <span className="text-xs text-muted-foreground tabular">{groups[t].length}</span>
             </TabsTrigger>
@@ -224,7 +233,12 @@ export function InboxDashboard() {
         </div>
       )}
 
-      <div ref={listRef} className="mt-4 space-y-4" aria-live="polite">
+      {/* Announce only the pending count, not every refetch of the whole list. */}
+      <p className="sr-only" aria-live="polite">
+        {items ? `${groups.pending.length} pending ${groups.pending.length === 1 ? "stamp" : "stamps"}` : ""}
+      </p>
+
+      <div ref={listRef} className="mt-4 space-y-4">
         {isLoading &&
           Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" aria-label="Loading message" />)}
         {isError && (
@@ -273,8 +287,12 @@ export function InboxDashboard() {
             onFocus={() => setFocus(i)}
           />
         ))}
+        {!isLoading && !isError && (
+          <LoadOlder shown={all.length} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
+        )}
       </div>
 
+      <ShortcutsDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {info && <InboxSettings key={`${info.open}-${info.price}-${info.bio}`} open={settingsOpen} onOpenChange={setSettingsOpen} info={info} />}
     </div>
   );
