@@ -11,7 +11,7 @@ const shortcuts: [keys: string[], action: string][] = [
   [["R"], "Reply & refund"],
   [["S"], "Spam: keep the stamp"],
   [["Esc"], "Close the reply box"],
-  [["Ctrl", "Enter"], "Send reply"],
+  [["Ctrl/⌘", "Enter"], "Send reply"],
   [["?"], "Show this help"],
 ];
 

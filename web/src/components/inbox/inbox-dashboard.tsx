@@ -98,7 +98,7 @@ export function InboxDashboard() {
         setHelpOpen(true);
       } else if (key === "j" || key === "arrowdown") {
         e.preventDefault();
-        setFocus((f) => Math.min(f + 1, visible.length - 1));
+        setFocus((f) => Math.max(0, Math.min(f + 1, visible.length - 1)));
       } else if (key === "k" || key === "arrowup") {
         e.preventDefault();
         setFocus((f) => Math.max(f - 1, 0));
@@ -288,7 +288,7 @@ export function InboxDashboard() {
           />
         ))}
         {!isLoading && !isError && (
-          <LoadOlder shown={all.length} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
+          <LoadOlder shown={all.length} limit={limit} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
         )}
       </div>
 

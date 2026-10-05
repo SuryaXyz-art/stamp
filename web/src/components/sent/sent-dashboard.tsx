@@ -109,7 +109,7 @@ export function SentDashboard() {
           />
         ))}
         {!isLoading && !isError && (
-          <LoadOlder shown={items.length} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
+          <LoadOlder shown={items.length} limit={limit} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
         )}
       </div>
     </div>

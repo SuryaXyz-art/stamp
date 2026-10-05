@@ -15,7 +15,7 @@ Contracts need [Foundry](https://getfoundry.sh). On Windows, use Git Bash or WSL
 ## Before you open a PR
 
 ```bash
-pnpm test                 # forge test + web typecheck + lint
+pnpm test                 # forge test + web unit tests + typecheck + lint
 cd contracts && forge fmt && forge snapshot   # if you touched Solidity
 pnpm build                # if you touched the web app
 ```
@@ -42,4 +42,4 @@ This regenerates `web/src/generated/` (typed ABI + deployment addresses). Commit
 
 ## Security
 
-Found a vulnerability? Please don't open a public issue. Email the maintainer (see the GitHub profile) and allow time for a fix. StampBox is immutable, so the fix will be a new deployment and a migration notice.
+Found a vulnerability? Please don't open a public issue. Follow [SECURITY.md](SECURITY.md) to report it privately. StampBox is immutable, so a contract fix will be a new deployment and a migration notice.

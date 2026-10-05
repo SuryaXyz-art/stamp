@@ -125,7 +125,7 @@ No `.env` needed: the app defaults to the public Arc RPCs and the deployed contr
 | Command | What it does |
 |---|---|
 | `pnpm dev` | Next.js dev server |
-| `pnpm test` | `forge test` + web typecheck + lint |
+| `pnpm test` | `forge test` + web unit tests (Vitest) + typecheck + lint |
 | `pnpm build` | `forge build` + `next build` |
 | `pnpm abi` | Re-export the ABI and deployment addresses into the web app after a contract change or deploy |
 
