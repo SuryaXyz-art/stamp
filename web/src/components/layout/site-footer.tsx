@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { useNetwork } from "@/components/providers/network-provider";
 import { AddArcButton } from "@/components/wallet/add-arc-button";
 import { FAUCET_URL, type NetworkKey } from "@/lib/chains";
@@ -38,6 +39,9 @@ export function SiteFooter() {
             <a className="underline-offset-4 hover:text-foreground hover:underline" href="https://docs.arc.io" target="_blank" rel="noopener">
               Arc docs
             </a>
+            <Link className="underline-offset-4 hover:text-foreground hover:underline" href="/privacy">
+              Privacy
+            </Link>
           </p>
         </div>
         <div className="space-y-3" data-tour="network">

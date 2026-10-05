@@ -9,3 +9,15 @@ allowBuilds:
   bufferutil: false
   keccak: false
   utf-8-validate: false
+
+# Patched versions of vulnerable transitive dependencies (pnpm audit). Remove once upstream ranges catch up.
+# Not overridable, accepted and tracked in SECURITY.md: braces (no patched release; dev-only via the shadcn CLI)
+# and decode-uri-component (the fix is ESM-only and breaks query-string's require(); wallet-SDK URI parsing only).
+overrides:
+  "ws@>=8.0.0 <8.21.0": "^8.21.0"
+  "uuid@<11.1.1": "^11.1.1"
+
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm # braces: no patched release; dev-only (shadcn CLI)
+    - GHSA-vcc3-ghjq-m6fr # decode-uri-component: fix is ESM-only, breaks query-string; wallet SDK only

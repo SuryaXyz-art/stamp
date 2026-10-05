@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter contracts build && pnpm --filter web build",
-    "test": "pnpm --filter contracts test && pnpm --filter web typecheck && pnpm --filter web lint",
+    "test": "pnpm --filter contracts test && pnpm --filter web test && pnpm --filter web typecheck && pnpm --filter web lint",
     "lint": "pnpm --filter web lint",
     "abi": "pnpm --filter contracts abi"
   },
