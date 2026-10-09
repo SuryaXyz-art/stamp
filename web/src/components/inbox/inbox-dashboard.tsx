@@ -11,7 +11,7 @@ import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadOlder } from "@/components/stamp/load-older";
 import { useStampTx } from "@/hooks/use-stamp-tx";
 import { MAILBOX_PAGE, useInboxInfo, useMailbox, useMailboxCount, useOptimisticStamps, type StampItem } from "@/hooks/use-stampbox";
@@ -208,89 +208,93 @@ export function InboxDashboard() {
             </TabsTrigger>
           ))}
         </TabsList>
-      </Tabs>
 
-      {tab === "pending" && groups.pending.length > 0 && (
-        <div className="sticky top-16 z-20 -mx-4 mt-4 flex flex-wrap items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur">
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={allPendingSelected}
-              onCheckedChange={(c) => setSelected(c ? new Set(groups.pending.map((s) => s.id)) : new Set())}
-              aria-label="Select all pending"
-            />
-            {selectedIds.length ? `${selectedIds.length} selected` : "Select all"}
-          </label>
-          {selectedIds.length > 0 && (
-            <div className="ml-auto flex gap-2">
-              <Button size="sm" variant="outline" className="rounded-lg" disabled={busy} onClick={() => settle(selectedIds, "refund")}>
-                Refund {selectedIds.length}
-              </Button>
-              <Button size="sm" variant="destructive" className="rounded-lg" disabled={busy} onClick={() => settle(selectedIds, "keep")}>
-                Spam: keep {formatUsdc(sum(groups.pending.filter((s) => selected.has(s.id))))}
-              </Button>
+        {tab === "pending" && groups.pending.length > 0 && (
+          <div className="sticky top-16 z-20 -mx-4 mt-4 flex flex-wrap items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={allPendingSelected}
+                onCheckedChange={(c) => setSelected(c ? new Set(groups.pending.map((s) => s.id)) : new Set())}
+                aria-label="Select all pending"
+              />
+              {selectedIds.length ? `${selectedIds.length} selected` : "Select all"}
+            </label>
+            {selectedIds.length > 0 && (
+              <div className="ml-auto flex gap-2">
+                <Button size="sm" variant="outline" className="rounded-lg" disabled={busy} onClick={() => settle(selectedIds, "refund")}>
+                  Refund {selectedIds.length}
+                </Button>
+                <Button size="sm" variant="destructive" className="rounded-lg" disabled={busy} onClick={() => settle(selectedIds, "keep")}>
+                  Spam: keep {formatUsdc(sum(groups.pending.filter((s) => selected.has(s.id))))}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Announce only the pending count, not every refetch of the whole list. */}
+        <p className="sr-only" aria-live="polite">
+          {items ? `${groups.pending.length} pending ${groups.pending.length === 1 ? "stamp" : "stamps"}` : ""}
+        </p>
+
+        {TABS.map((t) => (
+          <TabsContent key={t} value={t} className="mt-0">
+            <div ref={listRef} className="mt-4 space-y-4">
+              {isLoading &&
+                Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" aria-label="Loading message" />)}
+              {isError && (
+                <EmptyState
+                  title="Couldn't load your inbox"
+                  description="The Arc RPC didn't answer. This is usually temporary."
+                  action={<Button onClick={() => refetch()}>Try again</Button>}
+                />
+              )}
+              {!isLoading && !isError && visible.length === 0 && (
+                <EmptyState
+                  title={tab === "pending" ? "Inbox zero" : tab === "all" ? "No mail yet" : `Nothing ${tab} yet`}
+                  description={
+                    tab === "pending" || tab === "all" ? (
+                      <>
+                        Share your link to start receiving stamped messages:{" "}
+                        <Link href={`/${address}`} className="underline underline-offset-4">
+                          your send page
+                        </Link>
+                        .
+                      </>
+                    ) : undefined
+                  }
+                />
+              )}
+              {visible.map((item, i) => (
+                <InboxItem
+                  key={item.id.toString()}
+                  index={i}
+                  item={item}
+                  focused={i === focus}
+                  selected={selected.has(item.id)}
+                  onSelect={(v) =>
+                    setSelected((s) => {
+                      const n = new Set(s);
+                      if (v) n.add(item.id);
+                      else n.delete(item.id);
+                      return n;
+                    })
+                  }
+                  replying={replyingTo === item.id}
+                  onReplyToggle={(v) => setReplyingTo(v ? item.id : null)}
+                  onRefund={(reply) => settle([item.id], "refund", reply)}
+                  onKeep={() => settle([item.id], "keep")}
+                  busy={busy}
+                  onFocus={() => setFocus(i)}
+                />
+              ))}
+              {!isLoading && !isError && (
+                <LoadOlder shown={all.length} limit={limit} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Announce only the pending count, not every refetch of the whole list. */}
-      <p className="sr-only" aria-live="polite">
-        {items ? `${groups.pending.length} pending ${groups.pending.length === 1 ? "stamp" : "stamps"}` : ""}
-      </p>
-
-      <div ref={listRef} className="mt-4 space-y-4">
-        {isLoading &&
-          Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" aria-label="Loading message" />)}
-        {isError && (
-          <EmptyState
-            title="Couldn't load your inbox"
-            description="The Arc RPC didn't answer. This is usually temporary."
-            action={<Button onClick={() => refetch()}>Try again</Button>}
-          />
-        )}
-        {!isLoading && !isError && visible.length === 0 && (
-          <EmptyState
-            title={tab === "pending" ? "Inbox zero" : tab === "all" ? "No mail yet" : `Nothing ${tab} yet`}
-            description={
-              tab === "pending" || tab === "all" ? (
-                <>
-                  Share your link to start receiving stamped messages:{" "}
-                  <Link href={`/${address}`} className="underline underline-offset-4">
-                    your send page
-                  </Link>
-                  .
-                </>
-              ) : undefined
-            }
-          />
-        )}
-        {visible.map((item, i) => (
-          <InboxItem
-            key={item.id.toString()}
-            index={i}
-            item={item}
-            focused={i === focus}
-            selected={selected.has(item.id)}
-            onSelect={(v) =>
-              setSelected((s) => {
-                const n = new Set(s);
-                if (v) n.add(item.id);
-                else n.delete(item.id);
-                return n;
-              })
-            }
-            replying={replyingTo === item.id}
-            onReplyToggle={(v) => setReplyingTo(v ? item.id : null)}
-            onRefund={(reply) => settle([item.id], "refund", reply)}
-            onKeep={() => settle([item.id], "keep")}
-            busy={busy}
-            onFocus={() => setFocus(i)}
-          />
+          </TabsContent>
         ))}
-        {!isLoading && !isError && (
-          <LoadOlder shown={all.length} limit={limit} total={total} loading={isPlaceholderData} onClick={() => setLimit((l) => l + MAILBOX_PAGE)} />
-        )}
-      </div>
+      </Tabs>
 
       <ShortcutsDialog open={helpOpen} onOpenChange={setHelpOpen} />
       {info && <InboxSettings key={`${info.open}-${info.price}-${info.bio}`} open={settingsOpen} onOpenChange={setSettingsOpen} info={info} />}
