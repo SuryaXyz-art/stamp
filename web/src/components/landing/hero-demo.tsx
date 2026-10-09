@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Identicon } from "@/components/stamp/identicon";
 import { PostageStamp } from "@/components/stamp/postage-stamp";
 import { Postmark, type StampStatus } from "@/components/stamp/postmark";
@@ -22,11 +22,15 @@ const scenes: { from: string; message: string; status: StampStatus; outcome: str
 ];
 
 /** Looping demo: an envelope arrives, the stamp lands, then the receiver's decision is postmarked. */
+const noSubscribe = () => () => {};
+
 export function HeroDemo() {
-  const reduce = useReducedMotion();
+  // useReducedMotion is already known on the client's first render, but the server can't know it. Ignore it until
+  // hydration is done (server snapshot = false), otherwise the markup differs and React throws away the whole tree.
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const reduce = useReducedMotion() && hydrated;
   const [scene, setScene] = useState(0);
   const [animStage, setStage] = useState<"arrive" | "pending" | "settled">("arrive");
-  // Derived (not initial state) so server and client render the same markup before reduced-motion is known.
   const stage = reduce ? "settled" : animStage;
 
   useEffect(() => {
@@ -45,7 +49,8 @@ export function HeroDemo() {
   const s = scenes[scene];
   return (
     <div className="relative mx-auto w-full max-w-md" aria-label="Animated example of a stamped message" role="img" data-tour="demo">
-      <div className="absolute inset-x-6 -bottom-3 h-full rotate-2 rounded-2xl border border-border bg-card/60" aria-hidden="true" />
+      <div className="absolute inset-x-6 -bottom-3 h-full rotate-2 rounded-lg border border-violet/30 bg-card/60" aria-hidden="true" />
+      <div className="absolute inset-x-12 -bottom-6 h-full -rotate-1 rounded-lg border border-cyan/20 bg-card/30" aria-hidden="true" />
       <AnimatePresence mode="wait">
         <motion.div
           key={scene}
@@ -53,16 +58,16 @@ export function HeroDemo() {
           animate={{ y: 0, opacity: 1, rotate: 0 }}
           exit={{ x: 80, opacity: 0, rotate: 3 }}
           transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
-          className="envelope relative p-6 pt-8"
+          className="stamp-card relative p-6 py-8"
         >
           <div className="flex items-start gap-3">
             <Identicon address={s.from} size={36} />
             <div className="flex-1">
               <p className="text-sm">
-                <span className="text-muted-foreground">From </span>
+                <span className="kicker mr-1.5 text-muted-foreground">From</span>
                 <span className="font-medium tabular">{s.from.slice(0, 6)}…{s.from.slice(-4)}</span>
               </p>
-              <p className="text-xs text-muted-foreground">just now</p>
+              <p className="mt-0.5 font-mono text-xs text-muted-foreground">just now</p>
             </div>
             <motion.div
               initial={reduce ? false : { y: -60, rotate: -25, opacity: 0, scale: 1.3 }}
@@ -94,7 +99,7 @@ export function HeroDemo() {
                   initial={reduce ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
-                  className={`text-sm font-medium ${s.status === "refunded" ? "text-success" : "text-stamp-ink"}`}
+                  className={`font-mono text-sm font-medium ${s.status === "refunded" ? "text-lime-ink" : "text-magenta-ink"}`}
                 >
                   {s.outcome}
                 </motion.p>

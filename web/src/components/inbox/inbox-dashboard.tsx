@@ -153,16 +153,16 @@ export function InboxDashboard() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-4xl sm:text-5xl">Inbox</h1>
+          <h1 className="font-display text-4xl font-bold uppercase sm:text-5xl">Inbox</h1>
           {info?.open ? (
             <p className="mt-1 text-sm text-muted-foreground">
-              Open at <span className="font-medium text-foreground">{formatStampPrice(info.price)}</span> per stamp ·{" "}
+              Open at <span className="font-mono font-medium text-foreground">{formatStampPrice(info.price)}</span> per stamp ·{" "}
               <Link href={`/${address}`} className="underline underline-offset-4 hover:text-foreground">
                 your public page
               </Link>
             </p>
           ) : info ? (
-            <p className="mt-1 text-sm text-amber">Closed: not accepting new stamps.</p>
+            <p className="mt-1 text-sm text-amber-ink">Closed: not accepting new stamps.</p>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export function InboxDashboard() {
           >
             <Keyboard aria-hidden="true" />
           </Button>
-          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="rounded-xl">
+          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="rounded-lg">
             <Settings2 aria-hidden="true" /> Settings
           </Button>
         </div>
@@ -185,7 +185,7 @@ export function InboxDashboard() {
       <OwedBanner />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <StatCard label="Pending" value={formatUsdc(sum(groups.pending))} loading={isLoading} />
+        <StatCard label="Pending" value={formatUsdc(sum(groups.pending))} tone="text-cyan-ink" loading={isLoading} />
         <StatCard label="Earned from spam" value={formatUsdc(sum(groups.kept))} tone="text-stamp-ink" loading={isLoading} />
         <div className="relative">
           {celebrate !== null && <MoneyBurst />}
@@ -201,17 +201,17 @@ export function InboxDashboard() {
         }}
         className="mt-10"
       >
-        <TabsList className="h-10 w-full rounded-xl bg-muted p-1 sm:w-auto">
+        <TabsList className="h-10 w-full justify-start overflow-x-auto rounded-lg bg-muted p-1 sm:w-auto">
           {TABS.map((t) => (
-            <TabsTrigger key={t} value={t} className="rounded-lg px-3 capitalize data-[state=active]:bg-card">
-              {t} <span className="text-xs text-muted-foreground tabular">{groups[t].length}</span>
+            <TabsTrigger key={t} value={t} className="rounded-md px-3 font-display tracking-wide uppercase data-[state=active]:bg-card data-[state=active]:shadow-[inset_0_-2px_0_var(--magenta)]">
+              {t} <span className="font-mono text-xs text-muted-foreground">{groups[t].length}</span>
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
 
       {tab === "pending" && groups.pending.length > 0 && (
-        <div className="sticky top-0 z-20 -mx-4 mt-4 flex flex-wrap items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur">
+        <div className="sticky top-16 z-20 -mx-4 mt-4 flex flex-wrap items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
               checked={allPendingSelected}

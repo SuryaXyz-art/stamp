@@ -13,11 +13,11 @@ export function ConnectButton({ className, label = "Connect wallet" }: { classNa
       {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
         const ready = mounted;
         if (!ready) {
-          return <div className={cn("h-9 w-36 rounded-xl bg-muted", className)} aria-hidden="true" />;
+          return <div className={cn("h-9 w-36 rounded-lg bg-muted", className)} aria-hidden="true" />;
         }
         if (!account) {
           return (
-            <Button onClick={openConnectModal} className={cn("h-9 gap-2 rounded-xl px-4", className)}>
+            <Button onClick={openConnectModal} className={cn("h-9 gap-2 rounded-lg px-4", className)}>
               <Wallet aria-hidden="true" />
               {label}
             </Button>
@@ -25,7 +25,7 @@ export function ConnectButton({ className, label = "Connect wallet" }: { classNa
         }
         if (chain?.unsupported) {
           return (
-            <Button variant="destructive" onClick={openChainModal} className={cn("h-9 rounded-xl px-4", className)}>
+            <Button variant="destructive" onClick={openChainModal} className={cn("h-9 rounded-lg px-4", className)}>
               Wrong network
             </Button>
           );
@@ -34,7 +34,7 @@ export function ConnectButton({ className, label = "Connect wallet" }: { classNa
           <Button
             variant="outline"
             onClick={openAccountModal}
-            className={cn("h-9 gap-2 rounded-xl pr-2.5 pl-1.5", className)}
+            className={cn("h-9 gap-2 rounded-lg pr-2.5 pl-1.5", className)}
             aria-label={`Wallet ${account.displayName}, open account menu`}
           >
             <Identicon address={account.address} size={24} />

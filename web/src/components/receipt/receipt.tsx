@@ -17,7 +17,7 @@ import { formatStampPrice, formatUsdc, shortAddress } from "@/lib/format";
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dt className="kicker text-muted-foreground">{label}</dt>
       <dd className="text-sm font-medium tabular">{children}</dd>
     </div>
   );
@@ -58,7 +58,7 @@ export function Receipt({ id }: { id: bigint }) {
   const date = new Date(item.sentAt * 1000);
   const link = (hash?: string) =>
     hash ? (
-      <a href={`${explorer}/tx/${hash}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-usdc-ink underline-offset-4 hover:underline">
+      <a href={`${explorer}/tx/${hash}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-cyan-ink underline-offset-4 hover:underline">
         {shortAddress(hash, 6)} <ExternalLink className="size-3" aria-hidden="true" />
       </a>
     ) : (
@@ -67,10 +67,10 @@ export function Receipt({ id }: { id: bigint }) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-14">
-      <p className="text-sm text-muted-foreground">Receipt</p>
-      <h1 className="font-serif text-4xl sm:text-5xl">Stamp #{id.toString()}</h1>
+      <p className="kicker">Receipt</p>
+      <h1 className="font-display text-4xl font-bold uppercase sm:text-5xl">Stamp #{id.toString()}</h1>
 
-      <article className="envelope mt-8 p-6 pt-8 sm:p-10">
+      <article className="stamp-card mt-8 p-6 py-9 sm:p-10">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-4 text-sm">
             <div className="flex items-center gap-3">
@@ -110,15 +110,15 @@ export function Receipt({ id }: { id: bigint }) {
             <p className="text-lg leading-relaxed break-words whitespace-pre-wrap">{item.message}</p>
           )}
           {item.reply && (
-            <div className="mt-6 rounded-xl border border-success/25 bg-success/5 px-4 py-3">
-              <p className="mb-1 text-xs font-medium text-success">Reply</p>
+            <div className="mt-6 rounded-lg border border-lime/30 bg-lime/5 px-4 py-3">
+              <p className="kicker mb-1 text-lime-ink">Reply</p>
               <p className="break-words whitespace-pre-wrap">{item.reply}</p>
             </div>
           )}
         </div>
       </article>
 
-      <dl className="mt-6 divide-y divide-border rounded-2xl border border-border bg-card px-5 shadow-[var(--shadow-paper)]">
+      <dl className="panel mt-6 divide-y divide-border px-5">
         <Row label="Status">{statusLabel[item.status]}</Row>
         <Row label="Amount">{formatUsdc(item.amount, { suffix: true })}</Row>
         <Row label="Sent">{date.toLocaleString()}</Row>

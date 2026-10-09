@@ -9,7 +9,8 @@ import { stampBoxAbi } from "@/generated/stampBoxAbi";
 const sentEvent = stampBoxAbi.find((x) => x.type === "event" && x.name === "Sent") as AbiEvent;
 const settledEvent = stampBoxAbi.find((x) => x.type === "event" && x.name === "Settled") as AbiEvent;
 
-const INITIAL_CHUNK = 50_000n;
+// Arc's public testnet RPC rejects ranges above 10k blocks ("requested range too large").
+const INITIAL_CHUNK = 10_000n;
 const MIN_CHUNK = 500n;
 
 type ScanArgs = {
@@ -19,20 +20,33 @@ type ScanArgs = {
   args?: Record<string, unknown>;
   fromBlock: bigint;
   toBlock?: bigint;
+  /** Stop early once every one of these ids has been seen (when looking up specific stamps). */
+  ids?: bigint[];
 };
 
-async function scanLogs({ client, address, event, args, fromBlock, toBlock }: ScanArgs) {
+async function scanLogs({ client, address, event, args, fromBlock, toBlock, ids }: ScanArgs) {
+  const wanted = ids?.length ? new Set(ids) : undefined;
   const end = toBlock ?? (await client.getBlockNumber());
   const logs = [];
   let chunk = INITIAL_CHUNK;
   let from = fromBlock;
+  let backoffs = 0;
   while (from <= end) {
     const to = from + chunk - 1n > end ? end : from + chunk - 1n;
     try {
       const page = await client.getLogs({ address, event, args, fromBlock: from, toBlock: to, strict: true });
       logs.push(...page);
       from = to + 1n;
+      if (wanted) {
+        for (const l of page) wanted.delete((l.args as { id: bigint }).id);
+        if (!wanted.size) break;
+      }
     } catch (err) {
+      // Rate limited: wait and retry the same range. Anything else: assume the range was too big and halve it.
+      if (/rate limit/i.test(String(err)) && backoffs < 5) {
+        await new Promise((r) => setTimeout(r, 500 * 2 ** backoffs++));
+        continue;
+      }
       if (chunk <= MIN_CHUNK) throw err;
       chunk /= 2n;
     }
@@ -71,14 +85,14 @@ export async function fetchSentLogs(
   if (filter.ids?.length) args.id = filter.ids;
   if (filter.to) args.to = filter.to;
   if (filter.from) args.from = filter.from;
-  let logs = await scanLogs({ client, address, event: sentEvent, args, fromBlock });
+  let logs = await scanLogs({ client, address, event: sentEvent, args, fromBlock, ids: filter.ids });
 
   // The estimate can miss when block times drift; fall back to a full scan for anything not found.
   if (filter.ids?.length && fromBlock > startBlock) {
     const found = new Set(logs.map((l) => (l.args as { id: bigint }).id));
     const missing = filter.ids.filter((id) => !found.has(id));
     if (missing.length) {
-      const extra = await scanLogs({ client, address, event: sentEvent, args: { id: missing }, fromBlock: startBlock, toBlock: fromBlock - 1n });
+      const extra = await scanLogs({ client, address, event: sentEvent, args: { id: missing }, fromBlock: startBlock, toBlock: fromBlock - 1n, ids: missing });
       logs = [...extra, ...logs];
     }
   }
@@ -95,7 +109,7 @@ export async function fetchSettledLogs(
 ): Promise<SettledLog[]> {
   if (!ids.length) return [];
   const fromBlock = earliestSentAt !== undefined ? await estimateBlockAt(client, earliestSentAt, startBlock) : startBlock;
-  const logs = await scanLogs({ client, address, event: settledEvent, args: { id: ids }, fromBlock });
+  const logs = await scanLogs({ client, address, event: settledEvent, args: { id: ids }, fromBlock, ids });
   return logs.map((l) => {
     const a = l.args as { id: bigint; by: Address; status: number; reply: string };
     return { ...a, txHash: l.transactionHash!, blockNumber: l.blockNumber! };

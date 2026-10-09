@@ -27,7 +27,7 @@ export const config = {
   matcher: [
     {
       // Pages only: skip API routes, static assets, generated images and link prefetches.
-      source: "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|.*opengraph-image).*)",
+      source: "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|.*opengraph-image).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

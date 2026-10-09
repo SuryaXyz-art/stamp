@@ -20,6 +20,14 @@ Done without needing any decision (branch `feat/v2-enhancements`):
 | UX / a11y | "Reclaimed" inbox tab; "Load older" pages beyond 200 stamps on Inbox and Sent; `?` shortcuts dialog (replaces a tooltip screen readers couldn't reach); the inbox announces only the pending count instead of the whole list on every refetch; the reply form respects reduced motion. |
 | Tests | Vitest unit tests for the CSP builder and money/text formatting. |
 
+### M1: Neon Postal design system (done)
+
+- Tokens in `web/src/app/globals.css` (Tailwind v4 `@theme`): dark default (`#07060B`), light on `#F6F4FF`, neons for fills and per-theme `*-ink` text colours. `src/lib/theme-contrast.test.ts` asserts WCAG AA for every text/surface pair, tinted states, input borders and the focus ring in both themes.
+- Chakra Petch / Inter / JetBrains Mono via `next/font` (self-hosted). Perforated `stamp-card` (CSS mask), gradient `edge` hairline, holographic `foil` values, postmark "ink" on status change, grid + scanline backdrop, glitch on the hero headline only. All motion off under `prefers-reduced-motion`.
+- Restyled landing, inbox, sent, setup, send, receipt, 404, privacy, toasts, wallet modal, favicon and OG cards (site-wide + per inbox; fonts in `web/assets/fonts`, OFL). Phone bottom nav. `robots.txt`.
+- Fixes found on the way: hero hydration mismatch under reduced motion (it threw away the whole tree), the per-inbox OG card crashing on a dotted border, and receipt/message loading that never finished on the public testnet RPC (10k-block `eth_getLogs` cap + rate limits): scans now use 10k chunks, stop once the wanted ids are found, and back off on rate limits.
+- Open: Lighthouse mobile performance is 76 (a11y/best practices/SEO 100). Real LCP is ~0.2 s; the simulated score is held back by the wallet bundle in the root layout, which M2 replaces with a lazily loaded Privy/wagmi tree. Inbox/outbox views still scan logs from the deployment block; M2's database gets an event index.
+
 Not started because they need a decision, keys or a deploy: everything in Phases 1–5 that touches auth, the database, E2EE, contract v2, notifications, the domain or paid services.
 
 ---

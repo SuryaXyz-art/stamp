@@ -7,6 +7,8 @@ import { formatStampPrice, parseUsdc } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const presets = ["0.25", "1", "5", "25"].map((v) => parseEther(v));
+const activeChip = "border-magenta bg-magenta/15 text-foreground shadow-[var(--glow-magenta)]";
+const idleChip = "border-border bg-card hover:border-cyan/60";
 
 /** Price chips ($0.25 / $1 / $5 / $25 / custom). Value is 18-decimal native USDC. */
 export function PricePicker({ value, onChange }: { value: bigint | undefined; onChange: (v: bigint | undefined) => void }) {
@@ -31,8 +33,8 @@ export function PricePicker({ value, onChange }: { value: bigint | undefined; on
                 onChange(p);
               }}
               className={cn(
-                "h-11 min-w-16 rounded-xl border px-4 font-medium tabular transition-all duration-150",
-                active ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:border-foreground/40",
+                "h-11 min-w-16 rounded-lg border px-4 font-medium tabular transition-all duration-150",
+                active ? activeChip : idleChip,
               )}
             >
               {formatStampPrice(p)}
@@ -48,15 +50,15 @@ export function PricePicker({ value, onChange }: { value: bigint | undefined; on
             onChange(parseUsdc(text));
           }}
           className={cn(
-            "h-11 rounded-xl border px-4 font-medium transition-all duration-150",
-            custom ? "border-foreground bg-foreground text-background" : "border-border bg-card hover:border-foreground/40",
+            "h-11 rounded-lg border px-4 font-display font-semibold tracking-wide uppercase transition-all duration-150",
+            custom ? activeChip : idleChip,
           )}
         >
           Custom
         </button>
       </div>
       {custom && (
-        <div className="mt-3 flex max-w-48 items-center rounded-xl border border-border bg-background focus-within:ring-2 focus-within:ring-ring">
+        <div className="mt-3 flex max-w-48 items-center rounded-lg border border-border bg-background focus-within:border-ring focus-within:shadow-[var(--glow-ring)]">
           <span className="pl-3 text-muted-foreground" aria-hidden="true">
             $
           </span>

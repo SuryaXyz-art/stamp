@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Deterministic 5x5 mirrored blockie, generated from the address. No dependency, no network. */
+/** Deterministic 5x5 mirrored blockie, generated from the address: neon cells on a deep tinted tile. No dependency, no network. */
 export function Identicon({ address, size = 40, className }: { address: string; size?: number; className?: string }) {
   const hex = address.toLowerCase().replace(/^0x/, "").padEnd(40, "0");
   const byte = (i: number) => parseInt(hex.slice((i * 2) % 40, (i * 2) % 40 + 2), 16);
@@ -17,16 +17,16 @@ export function Identicon({ address, size = 40, className }: { address: string; 
   }
   return (
     <svg
-      viewBox="0 0 5 5"
+      viewBox="-0.5 -0.5 6 6"
       width={size}
       height={size}
-      className={cn("shrink-0 rounded-full ring-1 ring-border", className)}
-      style={{ background: `hsl(${hue2} 45% 88%)` }}
+      className={cn("shrink-0 rounded-md ring-1 ring-border", className)}
+      style={{ background: `hsl(${hue2} 55% 14%)` }}
       aria-hidden="true"
       shapeRendering="crispEdges"
     >
       {cells.map((c) => (
-        <rect key={`${c.x}-${c.y}`} x={c.x} y={c.y} width={1} height={1} fill={`hsl(${hue} 55% 42%)`} />
+        <rect key={`${c.x}-${c.y}`} x={c.x} y={c.y} width={1} height={1} fill={`hsl(${hue} 100% 62%)`} />
       ))}
     </svg>
   );

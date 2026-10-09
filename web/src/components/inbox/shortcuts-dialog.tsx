@@ -21,8 +21,8 @@ export function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenC
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/20 backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-popover p-6 text-popover-foreground shadow-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 motion-reduce:animate-none">
-          <Dialog.Title className="font-serif text-2xl">Keyboard shortcuts</Dialog.Title>
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-violet/40 bg-popover p-6 shadow-[var(--shadow-lift)] text-popover-foreground shadow-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 motion-reduce:animate-none">
+          <Dialog.Title className="font-display text-2xl font-bold uppercase">Keyboard shortcuts</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-muted-foreground">Work through your inbox without the mouse.</Dialog.Description>
           <dl className="mt-5 space-y-2.5 text-sm">
             {shortcuts.map(([keys, action]) => (
@@ -30,7 +30,7 @@ export function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenC
                 <dt className="text-muted-foreground">{action}</dt>
                 <dd className="flex gap-1">
                   {keys.map((k) => (
-                    <kbd key={k} className="min-w-7 rounded-md border border-border bg-muted px-1.5 py-0.5 text-center font-sans text-xs">
+                    <kbd key={k} className="min-w-7 rounded-md border border-border bg-muted px-1.5 py-0.5 text-center font-mono text-xs shadow-[inset_0_-1px_0_var(--border)]">
                       {k}
                     </kbd>
                   ))}

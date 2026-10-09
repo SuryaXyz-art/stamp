@@ -15,7 +15,7 @@ export function MoneyBurst() {
       {coins.map((c, i) => (
         <motion.span
           key={i}
-          className="absolute flex size-6 items-center justify-center rounded-full bg-success text-xs font-bold text-white shadow"
+          className="absolute flex size-6 items-center justify-center rounded-full bg-lime font-mono text-xs font-bold text-black shadow-[0_0_12px_var(--lime)]"
           initial={{ x: 0, y: 0, scale: 0.4, opacity: 0 }}
           animate={{ x: c.x, y: c.y, scale: 1, opacity: [0, 1, 1, 0] }}
           transition={{ duration: 0.9, delay: c.d, ease: "easeOut" }}

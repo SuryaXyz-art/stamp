@@ -79,7 +79,7 @@ export function InboxItem({ index, item, focused, selected, onSelect, replying, 
               onRefund(reply.trim());
             }}
           >
-            <div className="mx-3 -mt-2 rounded-b-2xl border border-t-0 border-border bg-muted/50 p-4 pt-6 sm:mx-6">
+            <div className="mx-3 -mt-1 rounded-b-xl border border-t-0 border-violet/30 bg-muted/60 p-4 pt-5 sm:mx-6">
               <label htmlFor={replyId} className="text-sm font-medium">
                 Your reply <span className="font-normal text-muted-foreground">(optional, public on-chain)</span>
               </label>
@@ -97,7 +97,7 @@ export function InboxItem({ index, item, focused, selected, onSelect, replying, 
                 className="mt-2 rounded-xl bg-background"
               />
               <div className="mt-3 flex items-center justify-between gap-3">
-                <span className="text-xs text-muted-foreground tabular">{byteLength(reply)} / 1000</span>
+                <span className="font-mono text-xs text-muted-foreground">{byteLength(reply)} / 1000</span>
                 <div className="flex gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={() => onReplyToggle(false)}>
                     Cancel

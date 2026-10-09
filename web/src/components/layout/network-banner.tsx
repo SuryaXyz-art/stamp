@@ -13,7 +13,7 @@ export function NetworkBanner() {
 
   if (!stampBox) {
     return (
-      <div role="status" className="sticky top-0 z-40 border-b border-border bg-muted/90 backdrop-blur">
+      <div role="status" className="relative z-40 border-b border-border bg-muted/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
           <Info className="size-4 text-usdc-ink" aria-hidden="true" />
           <span>Stamp isn&apos;t live on {chain.name} yet.</span>
@@ -31,9 +31,9 @@ export function NetworkBanner() {
   if (!isConnected || chainId === chain.id) return null;
 
   return (
-    <div role="alert" className="sticky top-0 z-40 border-b border-amber/30 bg-amber/10 backdrop-blur">
+    <div role="alert" className="relative z-40 border-b border-amber/40 bg-amber/10 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1.5 px-4 py-2 text-sm">
-        <AlertTriangle className="size-4 text-amber" aria-hidden="true" />
+        <AlertTriangle className="size-4 text-amber-ink" aria-hidden="true" />
         <span>Your wallet is on another network. Stamp runs on {chain.name}.</span>
         <Button size="sm" onClick={() => switchChain({ chainId: chain.id })} disabled={isPending} className="h-7 rounded-lg">
           {isPending ? "Switching…" : `Switch to ${chain.name}`}

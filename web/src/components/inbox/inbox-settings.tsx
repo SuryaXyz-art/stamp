@@ -46,7 +46,7 @@ export function InboxSettings({ open, onOpenChange, info }: { open: boolean; onO
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto bg-card sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="font-serif text-3xl font-normal">Inbox settings</SheetTitle>
+          <SheetTitle className="font-display text-3xl font-bold">Inbox settings</SheetTitle>
           <SheetDescription>Changes apply to new stamps only. Pending stamps keep the amount they were sent with.</SheetDescription>
         </SheetHeader>
         <div className="space-y-8 px-4 pb-8">

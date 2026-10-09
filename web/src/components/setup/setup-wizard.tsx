@@ -29,15 +29,15 @@ function Stepper({ current }: { current: number }) {
         <li key={label} className="flex items-center gap-2" aria-current={i === current ? "step" : undefined}>
           <span
             className={cn(
-              "flex size-7 items-center justify-center rounded-full border text-xs font-semibold tabular transition-colors duration-200",
-              i < current && "border-success bg-success text-white",
-              i === current && "border-foreground bg-foreground text-background",
+              "flex size-7 items-center justify-center rounded-md border font-mono text-xs font-semibold transition-colors duration-200",
+              i < current && "border-lime bg-lime text-black",
+              i === current && "border-magenta bg-magenta/15 text-magenta-ink shadow-[var(--glow-magenta)]",
               i > current && "border-border text-muted-foreground",
             )}
           >
             {i < current ? <Check className="size-3.5" aria-label="done" /> : i + 1}
           </span>
-          <span className={cn("hidden sm:inline", i === current ? "font-medium" : "text-muted-foreground")}>{label}</span>
+          <span className={cn("hidden font-display font-semibold tracking-wide uppercase sm:inline", i === current ? "text-foreground" : "text-muted-foreground")}>{label}</span>
           {i < steps.length - 1 && <span className="h-px w-6 bg-border sm:w-10" aria-hidden="true" />}
         </li>
       ))}
@@ -75,7 +75,7 @@ function InboxForm({ inbox, onDone }: { inbox: InboxInfo | undefined; onDone: ()
     >
       <div className="flex items-start gap-6">
         <div className="flex-1">
-          <p className="text-sm font-medium">Stamp price</p>
+          <p className="kicker">Stamp price</p>
           <p className="mt-0.5 mb-3 text-sm text-muted-foreground">What a stranger puts down to reach you. Refunded when you reply.</p>
           <PricePicker value={price} onChange={setPrice} />
         </div>
@@ -122,13 +122,13 @@ export function SetupWizard() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:py-16">
       <Stepper current={step} />
-      <h1 className="mt-8 font-serif text-4xl sm:text-5xl">
+      <h1 className="mt-8 font-display text-4xl font-bold uppercase sm:text-5xl">
         {step === 0 && "Open your inbox"}
         {step === 1 && (inbox?.open ? "Update your inbox" : "Set your price")}
         {step === 2 && "You're open for mail"}
       </h1>
 
-      <div className="envelope mt-8 p-5 pt-7 sm:p-8">
+      <div className="stamp-card mt-8 p-5 py-8 sm:p-8">
         {step === 0 && (
           <div className="space-y-5">
             <p className="text-muted-foreground">

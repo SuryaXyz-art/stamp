@@ -11,11 +11,24 @@ import { wagmiConfig } from "@/lib/wagmi";
 import { NetworkProvider, useNetwork } from "./network-provider";
 import { ThemeProvider, useTheme } from "./theme-provider";
 
-const rkShared = { borderRadius: "large", fontStack: "system" } as const;
-const rkLight = lightTheme({ ...rkShared, accentColor: "#0F1B2D", accentColorForeground: "#FAF7F2" });
-const rkDark = darkTheme({ ...rkShared, accentColor: "#F2EDE4", accentColorForeground: "#0B0F17" });
-rkLight.colors.modalBackground = "#FFFDF9";
-rkDark.colors.modalBackground = "#121826";
+// Neon Postal wallet modal. Hex values mirror the tokens in globals.css (RainbowKit needs literal colours).
+const rkShared = { borderRadius: "medium", fontStack: "system", overlayBlur: "small" } as const;
+const rkLight = lightTheme({ ...rkShared, accentColor: "#C2109F", accentColorForeground: "#FFFFFF" });
+const rkDark = darkTheme({ ...rkShared, accentColor: "#FF2BD6", accentColorForeground: "#07060B" });
+rkLight.colors.modalBackground = "#FFFFFF";
+rkLight.colors.modalBorder = "#D9D2EF";
+rkDark.colors.modalBackground = "#0E0C16";
+rkDark.colors.modalBorder = "#2A2540";
+rkDark.colors.modalText = "#F3F0FF";
+rkDark.colors.modalTextSecondary = "#A9A3C0";
+rkDark.colors.actionButtonSecondaryBackground = "#15121F";
+rkDark.colors.generalBorder = "#2A2540";
+rkDark.colors.menuItemBackground = "#15121F";
+rkDark.colors.closeButtonBackground = "#15121F";
+rkDark.colors.connectButtonBackground = "#0E0C16";
+rkDark.shadows.dialog = "0 0 0 1px #8B5CFF55, 0 24px 64px -16px #000, 0 0 48px -12px #FF2BD655";
+rkDark.fonts.body = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
+rkLight.fonts.body = rkDark.fonts.body;
 
 function Wallet({ children }: { children: ReactNode }) {
   const { theme } = useTheme();

@@ -29,7 +29,7 @@ function ReclaimButton({ item, now, onReclaim, busy }: { item: StampItem; now: n
         {ready ? `Reclaim ${formatUsdc(item.amount)}` : "Reclaim"}
       </Button>
       {!ready && (
-        <span className="text-xs text-muted-foreground tabular" aria-live="off">
+        <span className="font-mono text-xs text-muted-foreground" aria-live="off">
           available in {formatCountdown(remaining)}
         </span>
       )}
@@ -62,12 +62,12 @@ export function SentDashboard() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
-      <h1 className="font-serif text-4xl sm:text-5xl">Sent</h1>
+      <h1 className="font-display text-4xl font-bold uppercase sm:text-5xl">Sent</h1>
       <p className="mt-1 text-sm text-muted-foreground">Unanswered stamps can be reclaimed 7 days after sending.</p>
       <OwedBanner />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <StatCard label="Awaiting reply" value={formatUsdc(sum(pending))} loading={isLoading} />
+        <StatCard label="Awaiting reply" value={formatUsdc(sum(pending))} tone="text-cyan-ink" loading={isLoading} />
         <StatCard label="Came back to you" value={formatUsdc(sum(returned))} tone="text-success" loading={isLoading} />
         <StatCard label="Kept as spam" value={formatUsdc(sum(lost))} tone="text-stamp-ink" loading={isLoading} />
       </div>

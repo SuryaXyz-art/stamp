@@ -179,13 +179,13 @@ export function SendPage({ to }: { to: Address }) {
           <div className="flex items-center gap-3">
             <Identicon address={to} size={44} />
             <div className="min-w-0">
-              <h1 className="font-serif text-3xl leading-tight tabular sm:text-4xl">{shortAddress(to)}</h1>
+              <h1 className="font-mono text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">{shortAddress(to)}</h1>
               <CopyButton value={to} label="Copy address" className="-ml-2 h-7 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none" />
             </div>
           </div>
           {inbox?.bio && <p className="mt-3 text-lg text-pretty">{inbox.bio}</p>}
           <p className="mt-2 text-sm text-muted-foreground">
-            Charges a <span className="font-medium text-foreground">{formatUsdc(price, { suffix: true })}</span> refundable stamp to reach them.
+            Charges a <span className="font-mono font-medium text-foreground">{formatUsdc(price, { suffix: true })}</span> refundable stamp to reach them.
           </p>
         </div>
         <PostageStamp price={priceLabel} size="lg" tilt={4} className="hidden sm:block" />
@@ -198,11 +198,11 @@ export function SendPage({ to }: { to: Address }) {
             key="sent"
             initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="envelope mt-8 p-6 pt-8 text-center sm:p-10"
+            className="stamp-card mt-8 p-6 py-10 text-center sm:p-10"
             aria-live="polite"
           >
             <Postmark status="pending" size={110} className="mx-auto" />
-            <h2 className="mt-4 font-serif text-3xl">Delivered ✓</h2>
+            <h2 className="mt-4 font-display text-3xl font-bold text-lime-ink uppercase">Delivered ✓</h2>
             <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
               Your stamp is held by the contract. If they reply, it comes straight back to you. No reply in 7 days? Reclaim it from
               your Sent page.
@@ -222,7 +222,7 @@ export function SendPage({ to }: { to: Address }) {
           <motion.section
             key="compose"
             aria-label="Write a message"
-            className="envelope relative mt-8 overflow-hidden p-5 pt-7 sm:p-8"
+            className="stamp-card relative mt-8 overflow-hidden p-5 py-8 sm:p-8"
             animate={stamping && !reduce ? { x: [0, 0, 600], rotate: [0, 0, 6], opacity: [1, 1, 0] } : { x: 0, rotate: 0, opacity: 1 }}
             transition={{ duration: 1.1, times: [0, 0.55, 1], ease: "easeIn" }}
           >
@@ -268,7 +268,7 @@ export function SendPage({ to }: { to: Address }) {
                 className="h-10 rounded-xl bg-background"
                 aria-describedby={ids.contactHint}
               />
-              <p id={ids.contactHint} className={cn("text-xs", contact.trim() ? "text-amber" : "text-muted-foreground")}>
+              <p id={ids.contactHint} className={cn("text-xs", contact.trim() ? "text-amber-ink" : "text-muted-foreground")}>
                 {contact.trim()
                   ? "Anyone can read this on-chain, forever, and scrapers do. Prefer a public handle over your email or phone number."
                   : "Anything you put here becomes public on-chain. A public handle is safer than an email address."}
@@ -276,7 +276,7 @@ export function SendPage({ to }: { to: Address }) {
             </div>
 
             <div className="mt-3 flex items-start justify-between gap-4 text-xs">
-              <p id={ids.warning} className="flex items-start gap-1.5 text-amber">
+              <p id={ids.warning} className="flex items-start gap-1.5 text-amber-ink">
                 <AlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
                 Messages are public on-chain. Don&apos;t include anything secret.
               </p>
@@ -308,11 +308,11 @@ export function SendPage({ to }: { to: Address }) {
 
       <ul className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
         <li className="flex gap-2.5">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-lime-ink" aria-hidden="true" />
           You get this back if they reply. The stamp is held by an immutable contract, not by them.
         </li>
         <li className="flex gap-2.5">
-          <Clock className="mt-0.5 size-4 shrink-0 text-usdc-ink" aria-hidden="true" />
+          <Clock className="mt-0.5 size-4 shrink-0 text-cyan-ink" aria-hidden="true" />
           If they don&apos;t respond in 7 days, you can reclaim it yourself.
         </li>
       </ul>

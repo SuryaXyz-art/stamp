@@ -15,10 +15,10 @@ export function DemoInbox() {
   if (!DEMO_INBOX) return null;
   return (
     <section aria-labelledby="demo-heading" className="mx-auto max-w-6xl px-4">
-      <div className="envelope flex flex-col items-start gap-6 p-6 pt-8 sm:flex-row sm:items-center sm:p-10">
+      <div className="stamp-card flex flex-col items-start gap-6 p-6 py-9 sm:flex-row sm:items-center sm:p-10">
         <div className="flex-1">
-          <p className="text-sm font-medium text-usdc-ink">Demo inbox</p>
-          <h2 id="demo-heading" className="mt-1 font-serif text-3xl sm:text-4xl">
+          <p className="kicker">Demo inbox</p>
+          <h2 id="demo-heading" className="mt-2 font-display text-3xl font-bold uppercase sm:text-4xl">
             Send me a stamp. I&apos;ll refund you.
           </h2>
           <p className="mt-2 max-w-lg text-muted-foreground">
@@ -33,7 +33,7 @@ export function DemoInbox() {
         </div>
         <div className="flex items-center gap-6 self-stretch sm:flex-col sm:self-auto">
           <PostageStamp price={data?.open ? formatStampPrice(data.price) : "$1"} size="md" tilt={5} />
-          <Button asChild size="lg" className="h-11 rounded-xl px-5">
+          <Button asChild size="lg" className="h-11 rounded-lg px-5 font-display tracking-wide uppercase">
             <Link href={`/${DEMO_INBOX}`}>
               Try the demo inbox <ArrowRight aria-hidden="true" />
             </Link>

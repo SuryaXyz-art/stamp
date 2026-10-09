@@ -23,9 +23,9 @@ export function SharePanel({ address, price }: { address: Address; price: bigint
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-medium">Your link</p>
+        <p className="kicker">Your link</p>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <code className="flex min-h-11 flex-1 items-center rounded-xl border border-border bg-background px-4 py-2 text-sm break-all">
+          <code className="flex min-h-11 flex-1 items-center rounded-lg border border-cyan/30 bg-background px-4 py-2 font-mono text-sm break-all text-cyan-ink">
             {link.replace(/^https?:\/\//, "")}
           </code>
           <CopyButton value={link} label="Copy link" className="h-11 rounded-xl" />
@@ -33,8 +33,8 @@ export function SharePanel({ address, price }: { address: Address; price: bigint
       </div>
 
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-        <div className="rounded-2xl border border-border bg-white p-3" aria-label="QR code for your inbox link" role="img">
-          <QRCodeSVG value={link} size={148} fgColor="#0F1B2D" bgColor="#FFFFFF" level="M" />
+        <div className="rounded-lg bg-white p-3 shadow-[0_0_0_1px_var(--violet),0_0_24px_-6px_var(--violet)]" aria-label="QR code for your inbox link" role="img">
+          <QRCodeSVG value={link} size={148} fgColor="#120E1F" bgColor="#FFFFFF" level="M" />
         </div>
         <div className="w-full flex-1 space-y-3">
           <Button asChild className="h-11 w-full rounded-xl">

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="font-serif text-2xl sm:text-3xl">{title}</h2>
+      <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">{title}</h2>
       {children}
     </section>
   );
@@ -53,13 +53,13 @@ export default function Page() {
     <article className="mx-auto max-w-3xl space-y-12 px-4 py-10 sm:py-16">
       <header className="space-y-4">
         <p className="text-sm text-muted-foreground">Last updated 5 October 2026</p>
-        <h1 className="font-serif text-4xl sm:text-5xl">Privacy</h1>
+        <h1 className="font-display text-4xl font-bold uppercase sm:text-5xl">Privacy</h1>
         <p className="text-lg text-pretty">
           Stamp has no accounts, no database, no cookies, no analytics and no trackers. But everything you do on Stamp is written to a
           public blockchain, including the text of your messages.
         </p>
         <p className="flex gap-2.5 rounded-xl border border-amber/40 bg-amber/10 p-4 text-sm">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber" aria-hidden="true" />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-ink" aria-hidden="true" />
           <span>
             Treat every message and reply as if you were posting it publicly under your wallet address. It can never be deleted,
             not even by us.
