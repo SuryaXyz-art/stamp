@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -83,7 +82,7 @@ export function OnboardingTour() {
   const top = below ? rect.top + rect.height + 14 : rect.top - 14;
 
   return (
-    <AnimatePresence>
+    <>
       {/* Positioned with transforms, not top/left, so moving to the next anchor isn't a layout shift. */}
       <div
         className="pointer-events-none absolute top-0 left-0 z-40 rounded-xl shadow-[0_0_24px_var(--cyan)] ring-2 ring-cyan ring-offset-4 ring-offset-background transition-transform duration-300"
@@ -94,15 +93,12 @@ export function OnboardingTour() {
         className="absolute top-0 left-0 z-50"
         style={{ transform: `translate(${left}px, ${top}px)${below ? "" : " translateY(-100%)"}`, width: cardWidth }}
       >
-        <motion.div
+        <div
           key={step}
           role="dialog"
           aria-modal="false"
           aria-labelledby="tour-title"
-          initial={{ opacity: 0, y: below ? -6 : 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="panel relative p-5 shadow-[var(--shadow-lift)]"
+          className={`panel relative animate-in fade-in-0 p-5 shadow-[var(--shadow-lift)] duration-200 ${below ? "slide-in-from-top-1" : "slide-in-from-bottom-1"}`}
         >
           <button onClick={finish} className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label="Close tour">
             <X className="size-4" />
@@ -122,8 +118,8 @@ export function OnboardingTour() {
               {last ? "Got it" : "Next"}
             </Button>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
+    </>
   );
 }

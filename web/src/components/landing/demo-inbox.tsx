@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/stamp/identicon";
 import { PostageStamp } from "@/components/stamp/postage-stamp";
-import { useInboxInfo } from "@/hooks/use-stampbox";
+import { usePublicInbox } from "@/hooks/use-public-chain";
 import { DEMO_INBOX } from "@/lib/config";
 import { formatStampPrice, shortAddress } from "@/lib/format";
 
 /** The founder's permanent demo inbox: "Send me a stamp, I'll refund you." */
 export function DemoInbox() {
-  const { data } = useInboxInfo(DEMO_INBOX);
+  const { data } = usePublicInbox(DEMO_INBOX);
   if (!DEMO_INBOX) return null;
   return (
     <section aria-labelledby="demo-heading" className="mx-auto max-w-6xl px-4">

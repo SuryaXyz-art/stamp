@@ -10,9 +10,13 @@ import { themeInitScript } from "@/components/providers/theme-provider";
 import { SITE_URL } from "@/lib/config";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const chakra = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-chakra", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
+// Body text paints immediately in a size-matched fallback (next/font adjustFontFallback), so Inter isn't preloaded:
+// the headline's display font is the one the first paint waits for.
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap", preload: false });
+// One display weight: semibold text renders with the 700 face, and every extra file competes with the headline.
+const chakra = Chakra_Petch({ subsets: ["latin"], weight: "700", variable: "--font-chakra", display: "swap" });
+// Mono is for addresses and amounts, mostly below the fold: don't preload it.
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

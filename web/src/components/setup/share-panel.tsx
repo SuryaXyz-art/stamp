@@ -12,9 +12,9 @@ import { formatStampPrice } from "@/lib/format";
 const getOrigin = () => window.location.origin;
 
 /** Shareable link, QR code, "Share on X", and a preview of the v2 embed snippet. */
-export function SharePanel({ address, price }: { address: Address; price: bigint }) {
+export function SharePanel({ address, price, handle }: { address: Address; price: bigint; handle?: string | null }) {
   const origin = useSyncExternalStore(() => () => {}, getOrigin, () => SITE_URL);
-  const link = `${origin}/${address}`;
+  const link = handle ? `${origin}/@${handle}` : `${origin}/${address}`;
   const tweet = encodeURIComponent(
     `My inbox now has a price: ${formatStampPrice(price)} in USDC on Arc. Genuine messages get refunded; spam pays me.\n\nMessage me with a stamp 👇\n${link}`,
   );
@@ -33,8 +33,8 @@ export function SharePanel({ address, price }: { address: Address; price: bigint
       </div>
 
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-        <div className="rounded-lg bg-white p-3 shadow-[0_0_0_1px_var(--violet),0_0_24px_-6px_var(--violet)]" aria-label="QR code for your inbox link" role="img">
-          <QRCodeSVG value={link} size={148} fgColor="#120E1F" bgColor="#FFFFFF" level="M" />
+        <div className="rounded-lg bg-white p-3 shadow-[0_0_0_1px_var(--violet),0_0_24px_-6px_var(--violet)]">
+          <QRCodeSVG value={link} size={148} fgColor="#120E1F" bgColor="#FFFFFF" level="M" title="QR code for your inbox link" />
         </div>
         <div className="w-full flex-1 space-y-3">
           <Button asChild className="h-11 w-full rounded-xl">
@@ -56,7 +56,7 @@ export function SharePanel({ address, price }: { address: Address; price: bigint
           <p className="text-sm font-medium">Embed a “Message me” button</p>
           <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">v2 · coming soon</span>
         </div>
-        <pre className="mt-2 overflow-x-auto rounded-xl border border-dashed border-border bg-muted/50 p-4 text-xs leading-relaxed text-muted-foreground">
+        <pre tabIndex={0} aria-label="Embed code" className="mt-2 overflow-x-auto rounded-xl border border-dashed border-border bg-muted/50 p-4 text-xs leading-relaxed text-muted-foreground">
           {embed}
         </pre>
       </div>

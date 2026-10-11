@@ -1,16 +1,17 @@
 "use client";
 
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { AlertTriangle, ArrowRight, Clock, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { decodeEventLog, type Address } from "viem";
 import { useAccount, useBalance, useSwitchChain } from "wagmi";
+import { RuntimeGate } from "@/components/connect-gate";
 import { CopyButton } from "@/components/copy-button";
 import { useNetwork } from "@/components/providers/network-provider";
 import { EmptyState } from "@/components/stamp/empty-state";
-import { Identicon } from "@/components/stamp/identicon";
+import { Avatar } from "@/components/stamp/avatar";
+import { VerifiedBadges } from "@/components/stamp/verified-badges";
 import { PostageStamp } from "@/components/stamp/postage-stamp";
 import { Postmark } from "@/components/stamp/postmark";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { stampBoxAbi } from "@/generated/stampBoxAbi";
+import type { PublicProfile } from "@/lib/api-client";
+import { useAuth } from "@/components/wallet/auth-context";
 import { useStampTx } from "@/hooks/use-stamp-tx";
 import { useInboxInfo } from "@/hooks/use-stampbox";
 import { FAUCET_URL } from "@/lib/chains";
@@ -35,12 +38,32 @@ function composeMessage(message: string, contact: string) {
   return c ? `${body}\n\n— Reply to: ${c}` : body;
 }
 
-export function SendPage({ to }: { to: Address }) {
+type Props = { to: Address; profile?: PublicProfile | null };
+
+function SendSkeleton() {
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-10" aria-busy="true" aria-label="Loading">
+      <Skeleton className="h-40 rounded-xl" />
+      <Skeleton className="h-72 rounded-xl" />
+    </div>
+  );
+}
+
+/** The public send page for an inbox (by address or @handle). Wallet hooks only mount once the runtime is loaded. */
+export function SendPage(props: Props) {
+  return (
+    <RuntimeGate fallback={<SendSkeleton />}>
+      <SendPageInner {...props} />
+    </RuntimeGate>
+  );
+}
+
+function SendPageInner({ to, profile }: Props) {
   const { chain, stampBox } = useNetwork();
   const { data: inbox, isLoading, isError, refetch } = useInboxInfo(to);
   const { address: me, isConnected, chainId } = useAccount();
   const { data: balance } = useBalance({ address: me, chainId: chain.id, query: { enabled: Boolean(me), refetchInterval: 15_000 } });
-  const { openConnectModal } = useConnectModal();
+  const auth = useAuth();
   const { switchChain, isPending: switching } = useSwitchChain();
   const { run, busy } = useStampTx();
   const reduce = useReducedMotion();
@@ -97,14 +120,7 @@ export function SendPage({ to }: { to: Address }) {
 
   if (!stampBox) return null;
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-10" aria-busy="true">
-        <Skeleton className="h-40 rounded-2xl" />
-        <Skeleton className="h-72 rounded-2xl" />
-      </div>
-    );
-  }
+  if (isLoading) return <SendSkeleton />;
 
   if (isError || !inbox) {
     return (
@@ -142,8 +158,8 @@ export function SendPage({ to }: { to: Address }) {
   let cta: React.ReactNode;
   if (!isConnected) {
     cta = (
-      <Button size="lg" className="h-12 w-full rounded-xl text-base" onClick={openConnectModal}>
-        Connect wallet to send
+      <Button size="lg" className="h-12 w-full rounded-xl text-base" onClick={auth.login} disabled={!auth.ready}>
+        {auth.mode === "privy" ? "Sign in to send" : "Connect wallet to send"}
       </Button>
     );
   } else if (wrongChain) {
@@ -177,12 +193,23 @@ export function SendPage({ to }: { to: Address }) {
       <section aria-label="Receiver" className="flex items-center gap-5 sm:gap-8">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <Identicon address={to} size={44} />
+            <Avatar address={to} src={profile?.avatarUrl} size={profile ? 56 : 44} />
             <div className="min-w-0">
-              <h1 className="font-mono text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">{shortAddress(to)}</h1>
+              {profile?.handle ? (
+                <>
+                  <h1 className="truncate font-display text-3xl leading-tight font-bold sm:text-4xl">{profile.displayName || `@${profile.handle}`}</h1>
+                  <p className="font-mono text-sm text-muted-foreground">
+                    {profile.displayName ? `@${profile.handle} · ` : ""}
+                    {shortAddress(to)}
+                  </p>
+                </>
+              ) : (
+                <h1 className="font-mono text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">{shortAddress(to)}</h1>
+              )}
               <CopyButton value={to} label="Copy address" className="-ml-2 h-7 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none" />
             </div>
           </div>
+          {profile && profile.badges.length > 0 && <VerifiedBadges badges={profile.badges} className="mt-3" />}
           {inbox?.bio && <p className="mt-3 text-lg text-pretty">{inbox.bio}</p>}
           <p className="mt-2 text-sm text-muted-foreground">
             Charges a <span className="font-mono font-medium text-foreground">{formatUsdc(price, { suffix: true })}</span> refundable stamp to reach them.

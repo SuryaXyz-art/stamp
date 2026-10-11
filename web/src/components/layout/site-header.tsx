@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/providers/theme-provider";
 import { Button } from "@/components/ui/button";
-import { ConnectButton } from "@/components/wallet/connect-button";
+import { AccountButton } from "@/components/wallet/account-button";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { navItems } from "./nav-items";
@@ -21,7 +21,7 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-1 sm:flex">
           {navItems
-            .filter((item) => !("mobileOnly" in item))
+            .filter((item) => item.show !== "mobile")
             .map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -48,7 +48,7 @@ export function SiteHeader() {
         <Button variant="ghost" size="icon" onClick={toggle} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
           {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </Button>
-        <ConnectButton label="Connect" />
+        <AccountButton />
       </div>
       <div className="h-px bg-[image:var(--edge)] opacity-60" aria-hidden="true" />
     </header>

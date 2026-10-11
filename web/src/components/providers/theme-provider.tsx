@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
 const STORAGE_KEY = "stamp:theme";
@@ -18,12 +18,25 @@ const getSnapshot = (): Theme => (document.documentElement.classList.contains("d
 
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({ theme: "dark", toggle: () => {} });
 
+function apply(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.style.colorScheme = theme;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, () => "dark" as Theme);
+
+  // Safety net: some responses (e.g. a 404 thrown from a dynamic page) arrive as Next's bare error shell and are
+  // rendered on the client, where the inline <head> script never runs. Re-apply the stored choice once mounted.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(STORAGE_KEY) === "light" && getSnapshot() !== "light") apply("light");
+    } catch {}
+  }, []);
+
   const toggle = useCallback(() => {
     const next = getSnapshot() === "dark" ? "light" : "dark";
-    document.documentElement.classList.toggle("dark", next === "dark");
-    document.documentElement.style.colorScheme = next;
+    apply(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {}

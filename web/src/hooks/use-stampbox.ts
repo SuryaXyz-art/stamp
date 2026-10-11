@@ -2,9 +2,9 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Address, PublicClient } from "viem";
-import { usePublicClient } from "wagmi";
 import { useNetwork } from "@/components/providers/network-provider";
 import { stampBoxAbi } from "@/generated/stampBoxAbi";
+import { getPublicClient } from "@/lib/clients";
 import { fetchSentLogs, fetchSettledLogs } from "@/lib/logs";
 import { statusFromIndex, type StampStatus } from "@/components/stamp/postmark";
 
@@ -26,7 +26,7 @@ export const MAILBOX_PAGE = 200;
 
 export function useStampBox() {
   const net = useNetwork();
-  const client = usePublicClient({ chainId: net.chain.id }) as PublicClient | undefined;
+  const client: PublicClient | undefined = getPublicClient(net.key);
   return { ...net, client, address: net.stampBox, deployed: Boolean(net.stampBox) };
 }
 
@@ -131,27 +131,6 @@ export function useInboxInfo(user: Address | undefined) {
         client!.readContract({ address: address!, abi: stampBoxAbi, functionName: "bioOf", args: [user!] }),
       ]);
       return { price, bio, open: price > 0n };
-    },
-  });
-}
-
-export function useStats() {
-  const { client, address, key } = useStampBox();
-  return useQuery({
-    queryKey: ["stats", key],
-    enabled: Boolean(client && address),
-    refetchInterval: 20_000,
-    queryFn: async () => {
-      const read = (functionName: "stampsCount" | "totalSent" | "totalRefunded" | "totalKept" | "totalReclaimed") =>
-        client!.readContract({ address: address!, abi: stampBoxAbi, functionName });
-      const [count, sent, refunded, kept, reclaimed] = await Promise.all([
-        read("stampsCount"),
-        read("totalSent"),
-        read("totalRefunded"),
-        read("totalKept"),
-        read("totalReclaimed"),
-      ]);
-      return { count, sent, refunded, kept, reclaimed };
     },
   });
 }

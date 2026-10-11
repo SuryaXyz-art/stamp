@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
-import { SetupWizard } from "@/components/setup/setup-wizard";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Open your inbox" };
-
+/** Superseded by the three-step onboarding. */
 export default function Page() {
-  return <SetupWizard />;
+  redirect("/onboarding");
 }

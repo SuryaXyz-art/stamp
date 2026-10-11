@@ -9,7 +9,7 @@ const directives = (csp: string) =>
     }),
   );
 
-const base = { nonce: "abc123", isDev: false, rpcUrls: ["https://rpc.testnet.arc.io", "https://rpc.mainnet.arc.io/v1?key=x"], walletConnect: false };
+const base = { nonce: "abc123", isDev: false, rpcUrls: ["https://rpc.testnet.arc.io", "https://rpc.mainnet.arc.io/v1?key=x"], walletConnect: false, privy: false };
 
 describe("buildCsp", () => {
   it("only runs nonce'd scripts in production", () => {
@@ -46,6 +46,22 @@ describe("buildCsp", () => {
     const d = directives(buildCsp({ ...base, walletConnect: true }));
     expect(d["connect-src"]).toContain("wss://*.walletconnect.org");
     expect(d["frame-src"]).toContain("https://verify.walletconnect.org");
+  });
+
+  it("allows Privy's auth, iframe and bot check only when Privy is configured", () => {
+    expect(buildCsp(base)).not.toContain("privy");
+    const d = directives(buildCsp({ ...base, privy: true }));
+    expect(d["connect-src"]).toContain("https://auth.privy.io");
+    expect(d["frame-src"]).toEqual(expect.arrayContaining(["https://auth.privy.io", "https://challenges.cloudflare.com"]));
+    expect(d["child-src"]).toContain("https://auth.privy.io");
+    // Still nonce-only for scripts: no host allowlist that could widen what runs.
+    expect(d["script-src"]).toEqual(["'self'", "'nonce-abc123'", "'strict-dynamic'"]);
+  });
+
+  it("never repeats a source", () => {
+    for (const values of Object.values(directives(buildCsp({ ...base, privy: true, walletConnect: true })))) {
+      expect(new Set(values).size).toBe(values.length);
+    }
   });
 
   it("relaxes only what dev tooling needs", () => {

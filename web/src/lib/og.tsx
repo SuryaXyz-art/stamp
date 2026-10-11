@@ -1,6 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { ImageResponse } from "next/og";
 import type { ReactNode } from "react";
+import type { Address } from "viem";
+import { stampBoxAbi } from "@/generated/stampBoxAbi";
+import { getPublicClient } from "./clients";
+import { DEFAULT_NETWORK, getNetworkConfig } from "./config";
+import { formatStampPrice, shortAddress } from "./format";
 
 /** Shared look for every generated social card (1200x630): Neon Postal colours, self-hosted fonts. */
 
@@ -109,5 +115,38 @@ export function OgFrame({ children, aside, footer }: { children: ReactNode; asid
         {aside && <div style={{ display: "flex", alignItems: "center" }}>{aside}</div>}
       </div>
     </div>
+  );
+}
+
+async function readInbox(address: Address) {
+  const net = getNetworkConfig(DEFAULT_NETWORK);
+  if (!net.stampBox) return null;
+  try {
+    const client = getPublicClient(DEFAULT_NETWORK);
+    const [price, bio] = await Promise.all([
+      client.readContract({ address: net.stampBox, abi: stampBoxAbi, functionName: "priceOf", args: [address] }),
+      client.readContract({ address: net.stampBox, abi: stampBoxAbi, functionName: "bioOf", args: [address] }),
+    ]);
+    return { price, bio };
+  } catch {
+    return null;
+  }
+}
+
+/** Share card for one inbox: headline (or a default), who it is, and their stamp price on a neon stamp. */
+export async function inboxCard({ address, name }: { address: Address | null; name?: string }) {
+  const inbox = address ? await readInbox(address) : null;
+  const price = inbox && inbox.price > 0n ? formatStampPrice(inbox.price) : "$1";
+  const headline = inbox?.bio || "Message me. Reply = refund.";
+  const who = [name, address ? shortAddress(address) : "Stamp inbox"].filter(Boolean).join(" · ");
+  return new ImageResponse(
+    (
+      <OgFrame aside={<OgStamp price={price} />}>
+        <div style={{ display: "flex", fontFamily: "JetBrains Mono", fontSize: 26, letterSpacing: 4, color: og.cyan }}>MESSAGE ME ON STAMP</div>
+        <div style={{ display: "flex", marginTop: 18, fontSize: 64, fontWeight: 700, lineHeight: 1.04 }}>{headline.slice(0, 90)}</div>
+        <div style={{ display: "flex", marginTop: 22, fontFamily: "JetBrains Mono", fontSize: 28, color: og.muted }}>{who}</div>
+      </OgFrame>
+    ),
+    { ...OG_SIZE, fonts: await ogFonts() },
   );
 }

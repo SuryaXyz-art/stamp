@@ -1,11 +1,11 @@
 "use client";
 
-import { useStats } from "@/hooks/use-stampbox";
+import { usePublicStats } from "@/hooks/use-public-chain";
 import { useNetwork } from "@/components/providers/network-provider";
 import { formatUsdc } from "@/lib/format";
 
 export function LiveStats() {
-  const { data, isLoading } = useStats();
+  const { data, isLoading } = usePublicStats();
   const { chain } = useNetwork();
   const items = [
     { label: "Stamps sent", value: data ? data.count.toLocaleString("en-US") : undefined, tone: "text-cyan-ink" },

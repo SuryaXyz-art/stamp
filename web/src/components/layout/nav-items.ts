@@ -1,9 +1,10 @@
-import { Home, Inbox, Send, Stamp } from "lucide-react";
+import { Home, Inbox, Send, Stamp, UserRound } from "lucide-react";
 
-/** Primary destinations, shared by the desktop header and the phone bottom nav. */
+/** Primary destinations. Desktop has the account menu for settings; phones get a "Me" tab instead. */
 export const navItems = [
-  { href: "/", label: "Home", icon: Home, mobileOnly: true },
-  { href: "/inbox", label: "Inbox", icon: Inbox },
-  { href: "/sent", label: "Sent", icon: Send },
-  { href: "/setup", label: "Open inbox", icon: Stamp },
+  { href: "/", label: "Home", icon: Home, show: "mobile" },
+  { href: "/inbox", label: "Inbox", icon: Inbox, show: "both" },
+  { href: "/sent", label: "Sent", icon: Send, show: "both" },
+  { href: "/onboarding", label: "Open inbox", icon: Stamp, show: "desktop" },
+  { href: "/settings", label: "Me", icon: UserRound, show: "mobile" },
 ] as const;

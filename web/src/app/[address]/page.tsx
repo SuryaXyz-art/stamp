@@ -4,7 +4,9 @@ import { SendPage } from "@/components/send/send-page";
 import { EmptyState } from "@/components/stamp/empty-state";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { shortAddress } from "@/lib/format";
+import { profileByAddress } from "@/lib/server/profiles";
 
 export async function generateMetadata({ params }: PageProps<"/[address]">): Promise<Metadata> {
   const { address } = await params;
@@ -33,5 +35,8 @@ export default async function Page({ params }: PageProps<"/[address]">) {
       </div>
     );
   }
+  // Inboxes with a handle live at /@handle; old /0x… links keep working by redirecting there.
+  const profile = await profileByAddress(address);
+  if (profile?.handle) redirect(`/@${profile.handle}`);
   return <SendPage to={getAddress(address)} />;
 }

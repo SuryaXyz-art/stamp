@@ -50,7 +50,8 @@ Web app fixes ship as a normal deploy.
 ## Security model (summary)
 
 - **Contract:** checks-effects-interactions everywhere plus OpenZeppelin `ReentrancyGuard`; payouts to senders are pushed with a bounded gas stipend and deferred to `withdraw()` if they fail, so no recipient can block settlement; the invariant `balance == pending stamps + owed` is fuzz-tested; 100% line/branch coverage.
-- **Web app:** no server-side keys and no custody. It sends a strict nonce-based Content-Security-Policy plus HSTS, `frame-ancestors 'none'`, `nosniff`, a restrictive Permissions-Policy and Referrer-Policy. User text is always rendered as text, never as HTML.
+- **Web app:** no server-side wallet keys and no custody. It sends a strict nonce-based Content-Security-Policy (Privy and WalletConnect hosts are added only when configured) plus HSTS, `frame-ancestors 'none'`, `nosniff`, a restrictive Permissions-Policy and Referrer-Policy. User text is always rendered as text, never as HTML.
+- **Accounts API:** every authenticated route verifies the Privy access token (ES256, issuer and audience checked, locally against the verification key) and our HttpOnly `stamp_session` cookie for the same user; every write also needs a same-origin `Origin`/`Sec-Fetch-Site` and an `x-csrf-token` that matches the signed session (double submit). Inputs are validated with zod (unknown keys rejected, bidi/control characters blocked in names). Handle claims are bound to a linked wallet by an EIP-191 signature over a server-issued, HMAC-protected, 10-minute challenge. Rate limits via Upstash when configured. The integration test suite covers forged, expired and foreign-app tokens, CSRF, cross-origin writes, signature replay and tampering.
 - **Supply chain:** exact dependency versions plus a lockfile, `pnpm audit` in CI, Dependabot, CodeQL and gitleaks secret scanning. GitHub Actions are pinned to commit SHAs.
 
 ### Accepted advisories

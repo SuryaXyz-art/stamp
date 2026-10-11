@@ -9,6 +9,10 @@ allowBuilds:
   bufferutil: false
   keccak: false
   utf-8-validate: false
+  # Only a network version check (WalletConnect, via Privy). Not needed.
+  '@reown/appkit': false
+  # drizzle-kit's bundler; the platform binary comes from the optional @esbuild/* package without the script.
+  esbuild: false
 
 # Patched versions of vulnerable transitive dependencies (pnpm audit). Remove once upstream ranges catch up.
 # Not overridable, accepted and tracked in SECURITY.md: braces (no patched release; dev-only via the shadcn CLI)

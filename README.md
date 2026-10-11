@@ -49,15 +49,21 @@ Stamp only works because of four things Arc does differently:
 
 ## Architecture
 
-There is no backend and no database. The contract is the whole product; the web app is a static client that reads and writes Arc directly.
+The contract is the product: every stamp, payment and settlement lives on Arc, and the server never holds funds, keys or message plaintext. A small Next.js backend adds optional accounts on top: Privy sign-in (X, Discord, Google, email, passkeys, wallets) with self-custodial embedded wallets, `/@handle` profiles bound to a wallet by signature, and settings. Without its keys the app still runs as a pure wallet client.
 
 ```mermaid
 flowchart LR
     subgraph Browser["Web app (Next.js, wagmi/viem)"]
-      Send["/[address]<br/>send page"]
+      Send["/@handle · /[address]<br/>send page"]
       Inbox["/inbox<br/>receiver"]
       Sent["/sent<br/>sender"]
       Receipt["/stamp/[id]<br/>receipt"]
+      Auth["Privy SDK<br/>(lazy-loaded)"]
+    end
+
+    subgraph Server["Next.js route handlers (no keys, no funds)"]
+      API["/api/auth · /api/me · /api/handles<br/>Privy token verified on every call<br/>HttpOnly session + CSRF + zod"]
+      DB[("Postgres (Neon)<br/>profiles · handles")]
     end
 
     subgraph Arc["Arc L1 (USDC gas, sub-second finality)"]
@@ -71,6 +77,8 @@ flowchart LR
     Box -- emits --> Logs
     Inbox & Sent & Receipt -- "inboxOf / outboxOf / getStamp" --> Box
     Inbox & Sent & Receipt -- "eth_getLogs (chunked, filtered by indexed id/to)" --> Logs
+    Auth -- "access + identity token" --> API
+    API --> DB
 ```
 
 **Lifecycle of a stamp**
@@ -88,7 +96,9 @@ stateDiagram-v2
 
 - **Storage** holds only what settlement needs: `from`, `to`, `amount`, `sentAt`, `status` (3 slots), plus per-user id indexes.
 - **Message and reply text live only in event logs**, which keeps sends cheap. The app reads ids and status from view functions, then fetches text with `eth_getLogs` filtered by indexed `id`. It scans in chunks and halves a chunk if the RPC rejects the range, and it estimates the starting block from `sentAt` to avoid scanning from genesis.
-- **Live stats** on the landing page come from four lifetime counters (`totalSent`, `totalRefunded`, `totalKept`, `totalReclaimed`), so no indexer is needed.
+- **Live stats** on the landing page come from four lifetime counters (`totalSent`, `totalRefunded`, `totalKept`, `totalReclaimed`), read through `/api/chain/stats` so the landing page ships no chain or wallet library.
+- **Accounts** (all optional, each feature hides itself when its key is missing): Privy tokens are ES256 JWTs verified locally against the app's verification key on every API request; our own `stamp_session` cookie is HttpOnly + SameSite=Lax and every write needs a matching `x-csrf-token` (double submit) and a same-origin `Origin`. Handles are ASCII `[a-z0-9_]{3,20}` with a reserved list, bound to a wallet by an EIP-191 signature that anyone can re-verify. We store no emails or OAuth tokens. See [PRIVACY.md](PRIVACY.md).
+- **Bundle discipline:** wallet and auth code (Privy, wagmi) is a separate chunk loaded only on wallet pages, on "Sign in", or for returning signed-in visitors. The landing page scores 91+ on Lighthouse mobile.
 
 ## Security model
 
@@ -120,7 +130,7 @@ pnpm install
 pnpm dev            # http://localhost:3000, talks to Arc with zero config
 ```
 
-No `.env` needed: the app defaults to the public Arc RPCs and the deployed contract addresses in `contracts/deployments/*.json`. See [`web/.env.example`](web/.env.example) for optional overrides.
+No `.env` needed: the app defaults to the public Arc RPCs and the deployed contract addresses in `contracts/deployments/*.json`, with sign-in falling back to browser wallets. To turn on accounts, copy [`web/.env.example`](web/.env.example) to `web/.env.local` and fill in the Privy keys, a `SESSION_SECRET` and a `DATABASE_URL` (`pglite:./.data/pglite` works locally with nothing to install; use Neon + `pnpm db:migrate` in production).
 
 | Command | What it does |
 |---|---|
@@ -128,6 +138,7 @@ No `.env` needed: the app defaults to the public Arc RPCs and the deployed contr
 | `pnpm test` | `forge test` + web unit tests (Vitest) + typecheck + lint |
 | `pnpm build` | `forge build` + `next build` |
 | `pnpm abi` | Re-export the ABI and deployment addresses into the web app after a contract change or deploy |
+| `pnpm --filter web db:generate` / `db:migrate` | Generate / apply Drizzle migrations (Neon) |
 
 ## Tests
 

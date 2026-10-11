@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local PGlite database (DATABASE_URL=pglite:./.data/pglite)
+/.data/

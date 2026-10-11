@@ -28,6 +28,16 @@ Done without needing any decision (branch `feat/v2-enhancements`):
 - Fixes found on the way: hero hydration mismatch under reduced motion (it threw away the whole tree), the per-inbox OG card crashing on a dotted border, and receipt/message loading that never finished on the public testnet RPC (10k-block `eth_getLogs` cap + rate limits): scans now use 10k chunks, stop once the wanted ids are found, and back off on rate limits.
 - Open: Lighthouse mobile performance is 76 (a11y/best practices/SEO 100). Real LCP is ~0.2 s; the simulated score is held back by the wallet bundle in the root layout, which M2 replaces with a lazily loaded Privy/wagmi tree. Inbox/outbox views still scan logs from the deployment block; M2's database gets an event index.
 
+### M2: accounts (code complete; live sign-in waits on your Privy keys)
+
+- Privy (X, Discord, Google, email OTP, passkeys, external wallets) with Arc as a custom chain and embedded wallets for social/email users; wagmi through `@privy-io/wagmi`. Without `NEXT_PUBLIC_PRIVY_APP_ID` the app falls back to browser wallets (EIP-6963) and hides account features. A crash or a Privy that never becomes ready (bad app id) shows "Sign-in unavailable" instead of breaking the site.
+- Backend: Next.js route handlers + Drizzle on Neon (PGlite for local/tests). Privy access + identity tokens verified locally (jose, ES256) on every call; our HttpOnly session + double-submit CSRF + same-origin check on writes; zod everywhere; Upstash rate limits (off without keys). We store no emails or OAuth tokens.
+- Handles at `/@handle` (rewrite to `/u/[handle]`), ASCII `[a-z0-9_]{3,20}`, reserved list, bound to a linked wallet by an EIP-191 signature over an HMAC'd 10-minute challenge; `/0x…` redirects to the handle. Verified X/Discord badges (hideable), OG card per handle.
+- Onboarding in 3 steps (sign in → claim handle + price → fund with QR/faucet/live balance → open inbox). Settings: profile, avatar from X or identicon, linked accounts (link/unlink), wallet + key export, privacy toggles, JSON export, delete account (also deletes the Privy user).
+- Performance: wallet/auth code is a lazy chunk; landing reads stats via `/api/chain/*`, hero/tour animate in CSS. Lighthouse mobile 76 → 91, landing JS ~845 → ~370 KB.
+- Tests: 94 unit/integration (API routes against PGlite with locally minted Privy-format tokens: forged/expired/foreign tokens, CSRF, cross-origin, handle signature replay/tampering/expiry, export/delete, feature flags). Browser: 44 page loads × axe + CSP, 34 interactive steps per theme with a mock wallet; Privy mode probed with a placeholder app id (zero CSP violations, graceful failure).
+- Still open for M2's acceptance test: a real X sign-in → embedded wallet → faucet → send, which needs the Privy app. The event index for inbox history moves to M4 (Passport needs the same data).
+
 Not started because they need a decision, keys or a deploy: everything in Phases 1–5 that touches auth, the database, E2EE, contract v2, notifications, the domain or paid services.
 
 ---

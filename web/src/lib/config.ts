@@ -1,4 +1,4 @@
-import { getAddress, isAddress, type Address } from "viem";
+import type { Address } from "viem";
 import { deployments } from "@/generated/deployments";
 import { chainsByNetwork, type NetworkKey } from "./chains";
 
@@ -7,8 +7,9 @@ import { chainsByNetwork, type NetworkKey } from "./chains";
  * contract addresses come from contracts/deployments/*.json (generated into src/generated).
  */
 
+/** Format check only (no checksum): keeps viem's hashing code out of every page that reads config. */
 function envAddress(value: string | undefined): Address | undefined {
-  return value && isAddress(value) ? getAddress(value) : undefined;
+  return value && /^0x[0-9a-fA-F]{40}$/.test(value) ? (value as Address) : undefined;
 }
 
 function rpcOverride(value: string | undefined): string | undefined {
@@ -70,3 +71,6 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://stamp-arc.
 
 /** Public source repository (footer + README links). */
 export const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ritikpandey/stamp";
+
+/** Privy app id (public). Without it, sign-in falls back to browser wallets only and account features stay off. */
+export const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";

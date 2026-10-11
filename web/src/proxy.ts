@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getNetworkConfig, WALLETCONNECT_PROJECT_ID } from "@/lib/config";
+import { getNetworkConfig, PRIVY_APP_ID, WALLETCONNECT_PROJECT_ID } from "@/lib/config";
 import { buildCsp, createNonce } from "@/lib/security-headers";
 
 const rpcUrls = [getNetworkConfig("mainnet").rpcUrl, getNetworkConfig("testnet").rpcUrl];
@@ -12,6 +12,7 @@ export function proxy(request: NextRequest) {
     isDev: process.env.NODE_ENV === "development",
     rpcUrls,
     walletConnect: Boolean(WALLETCONNECT_PROJECT_ID),
+    privy: Boolean(PRIVY_APP_ID),
   });
 
   const requestHeaders = new Headers(request.headers);

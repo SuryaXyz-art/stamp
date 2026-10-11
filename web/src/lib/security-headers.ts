@@ -19,7 +19,18 @@ const WALLETCONNECT = {
 };
 
 /** Coinbase Wallet / Base Account SDK (the wallet itself opens in a popup, which CSP doesn't govern). */
-const COINBASE = { connect: ["https://*.coinbase.com", "wss://*.coinbase.com", "https://*.base.org"] };
+const COINBASE = { connect: ["https://*.coinbase.com", "wss://*.coinbase.com", "https://*.base.org", "wss://www.walletlink.org"] };
+
+/**
+ * Privy: auth API, embedded-wallet iframe, Cloudflare Turnstile (bot check) and Privy-hosted RPC.
+ * Source: https://docs.privy.io/security/implementation-guide/content-security-policy
+ * Turnstile's script is injected by Privy's own (nonce'd) code, so 'strict-dynamic' covers it.
+ */
+const PRIVY = {
+  connect: ["https://auth.privy.io", "https://*.rpc.privy.systems", "wss://relay.walletconnect.com", "wss://relay.walletconnect.org", "https://explorer-api.walletconnect.com"],
+  frame: ["https://auth.privy.io", "https://verify.walletconnect.com", "https://verify.walletconnect.org", "https://challenges.cloudflare.com"],
+  img: ["https://explorer-api.walletconnect.com"],
+};
 
 export type CspOptions = {
   nonce: string;
@@ -27,6 +38,8 @@ export type CspOptions = {
   /** Every JSON-RPC endpoint the browser talks to (Arc mainnet/testnet, plus env overrides). */
   rpcUrls: string[];
   walletConnect: boolean;
+  /** Privy is configured (NEXT_PUBLIC_PRIVY_APP_ID). */
+  privy: boolean;
 };
 
 function origin(url: string): string | undefined {
@@ -43,22 +56,24 @@ function origin(url: string): string | undefined {
  * bundle loads it. Styles allow 'unsafe-inline' because wallet modals, toasts and motion set inline styles;
  * user content is always rendered as React text, never as HTML.
  */
-export function buildCsp({ nonce, isDev, rpcUrls, walletConnect }: CspOptions): string {
+export function buildCsp({ nonce, isDev, rpcUrls, walletConnect, privy }: CspOptions): string {
   const rpcOrigins = [...new Set(rpcUrls.map(origin).filter((o): o is string => Boolean(o)))];
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(isDev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'"],
-    "img-src": ["'self'", "data:", "blob:", ...(walletConnect ? WALLETCONNECT.img : [])],
+    "img-src": ["'self'", "data:", "blob:", ...(walletConnect ? WALLETCONNECT.img : []), ...(privy ? PRIVY.img : [])],
     "font-src": ["'self'"],
     "connect-src": [
       "'self'",
       ...rpcOrigins,
       ...COINBASE.connect,
       ...(walletConnect ? WALLETCONNECT.connect : []),
+      ...(privy ? PRIVY.connect : []),
       ...(isDev ? ["ws://localhost:*", "ws://127.0.0.1:*"] : []),
     ],
-    "frame-src": ["'self'", ...(walletConnect ? WALLETCONNECT.frame : [])],
+    "frame-src": ["'self'", ...(walletConnect ? WALLETCONNECT.frame : []), ...(privy ? PRIVY.frame : [])],
+    "child-src": ["'self'", ...(privy ? PRIVY.frame : [])],
     "worker-src": ["'self'", "blob:"],
     "manifest-src": ["'self'"],
     "object-src": ["'none'"],
@@ -66,7 +81,7 @@ export function buildCsp({ nonce, isDev, rpcUrls, walletConnect }: CspOptions): 
     "form-action": ["'self'"],
     "frame-ancestors": ["'none'"],
   };
-  const parts = Object.entries(directives).map(([k, v]) => `${k} ${v.join(" ")}`);
+  const parts = Object.entries(directives).map(([k, v]) => `${k} ${[...new Set(v)].join(" ")}`);
   if (!isDev) parts.push("upgrade-insecure-requests");
   return parts.join("; ");
 }
@@ -89,6 +104,8 @@ export const staticSecurityHeaders: { key: string; value: string }[] = [
     value:
       "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=(), " +
       "magnetometer=(), gyroscope=(), accelerometer=(), browsing-topics=(), " +
-      "publickey-credentials-get=(self), publickey-credentials-create=(self), clipboard-write=(self)",
+      // Passkeys and "copy private key" also run inside Privy's iframe.
+      'publickey-credentials-get=(self "https://auth.privy.io"), publickey-credentials-create=(self "https://auth.privy.io"), ' +
+      'clipboard-write=(self "https://auth.privy.io")',
   },
 ];
