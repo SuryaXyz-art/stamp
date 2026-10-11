@@ -38,6 +38,13 @@ Done without needing any decision (branch `feat/v2-enhancements`):
 - Tests: 94 unit/integration (API routes against PGlite with locally minted Privy-format tokens: forged/expired/foreign tokens, CSRF, cross-origin, handle signature replay/tampering/expiry, export/delete, feature flags). Browser: 44 page loads × axe + CSP, 34 interactive steps per theme with a mock wallet; Privy mode probed with a placeholder app id (zero CSP violations, graceful failure).
 - Still open for M2's acceptance test: a real X sign-in → embedded wallet → faucet → send, which needs the Privy app. The event index for inbox history moves to M4 (Passport needs the same data).
 
+### Microgrants polish (done, 11 Oct 2026)
+
+- Agent quote API `GET /api/v1/stamp` (address or handle, ready-to-sign `send()` tx, open CORS), `/developers` guide, landing section.
+- `/badge/<id>` SVG with live price; real badge snippets in a new inbox **Share** sheet (replaces the "coming soon" embed that pointed at a missing `/embed.js`).
+- Fixes: long bios overflowed the phone send page; long words in messages/replies; the landing tour auto-scrolled phones and now only auto-starts on desktop; zero-stamp stats state + contract link.
+- `pnpm record <network>` writes `deployments/arc-*.json` from Foundry's broadcast log. Launch and submission steps: `docs/SUBMISSION.md`.
+
 Not started because they need a decision, keys or a deploy: everything in Phases 1–5 that touches auth, the database, E2EE, contract v2, notifications, the domain or paid services.
 
 ---

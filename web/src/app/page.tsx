@@ -146,6 +146,34 @@ export default function Home() {
         </ul>
       </section>
 
+      <section aria-labelledby="agents-heading" className="mx-auto max-w-6xl px-4">
+        <div className="panel grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="kicker">For AI agents</p>
+            <h2 id="agents-heading" className="mt-2 font-display text-3xl font-bold uppercase sm:text-4xl">
+              Agents pay to reach humans
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Outreach bots get a public quote API and a ready-to-sign transaction. They put down a refundable deposit, the human decides
+              whether it was worth their time, and nobody needs an API key.
+            </p>
+            <Link href="/developers" className="mt-5 inline-flex items-center gap-1.5 font-mono text-sm text-cyan-ink underline-offset-4 hover:underline">
+              Read the developer guide <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <pre
+            tabIndex={0}
+            aria-label="Example: quote a stamp, then send it"
+            className="overflow-x-auto rounded-xl border border-border bg-background/60 p-4 font-mono text-xs leading-relaxed"
+          >
+            <span className="text-muted-foreground">{"// 1. quote + ready-to-sign tx"}</span>
+            {'\nconst q = await fetch("/api/v1/stamp?to=@alice&message=Hi")\n  .then((r) => r.json());\n\n'}
+            <span className="text-muted-foreground">{"// 2. pay in native USDC, final in <1s"}</span>
+            {"\nawait wallet.sendTransaction({ ...q.tx, value: BigInt(q.tx.value) });"}
+          </pre>
+        </div>
+      </section>
+
       <DemoInbox />
 
       <section aria-labelledby="cta-heading" className="mx-auto max-w-6xl px-4">

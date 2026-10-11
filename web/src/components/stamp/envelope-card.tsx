@@ -96,12 +96,12 @@ export function EnvelopeCard({
             <div className="h-3.5 w-3/5 animate-pulse rounded bg-muted" />
           </div>
         ) : (
-          <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap">{message}</p>
+          <p className="text-[15px] leading-relaxed wrap-anywhere whitespace-pre-wrap">{message}</p>
         )}
         {reply && (
           <div className="mt-4 rounded-lg border border-lime/30 bg-lime/5 px-4 py-3">
             <p className="kicker mb-1 text-lime-ink">Reply</p>
-            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{reply}</p>
+            <p className="text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap">{reply}</p>
           </div>
         )}
       </div>

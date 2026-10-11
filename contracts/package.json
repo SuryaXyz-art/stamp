@@ -9,7 +9,8 @@
     "test": "forge test",
     "coverage": "forge coverage --no-match-coverage test/",
     "snapshot": "forge snapshot",
-    "abi": "node scripts/export-abi.mjs"
+    "abi": "node scripts/export-abi.mjs",
+    "record": "node scripts/record-deployment.mjs"
   },
   "exports": {
     "./deployments/*": "./deployments/*",

@@ -19,8 +19,8 @@ const steps = [
   },
   {
     target: "network",
-    title: "Try it free on testnet",
-    body: "Switch to Testnet down here and grab free test USDC from Circle's faucet. Nothing real is spent.",
+    title: "Real dollars or a free test run",
+    body: "Mainnet uses real USDC. Testnet is free: pick it down here and grab test USDC from Circle's faucet.",
   },
 ] as const;
 
@@ -36,7 +36,8 @@ export function OnboardingTour() {
     try {
       done = localStorage.getItem(STORAGE_KEY) === "1";
     } catch {}
-    if (done) return;
+    // Phones get no auto-tour: a popover over a one-column page hides the very thing it points at.
+    if (done || !window.matchMedia("(min-width: 1024px)").matches) return;
     const t = setTimeout(() => setStep(0), 1200);
     return () => clearTimeout(t);
   }, []);
@@ -52,7 +53,12 @@ export function OnboardingTour() {
     if (step === null) return;
     const el = document.querySelector<HTMLElement>(`[data-tour="${steps[step].target}"]`);
     if (!el) return;
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    const r0 = el.getBoundingClientRect();
+    // Only scroll when the anchor is off-screen; yanking the page on first load is disorienting.
+    if (r0.top < 0 || r0.bottom > window.innerHeight) {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    }
     const update = () => {
       const r = el.getBoundingClientRect();
       setRect({ top: r.top + window.scrollY, left: r.left + window.scrollX, width: r.width, height: r.height });

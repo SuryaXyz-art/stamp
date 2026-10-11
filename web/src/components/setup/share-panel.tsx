@@ -11,14 +11,16 @@ import { formatStampPrice } from "@/lib/format";
 
 const getOrigin = () => window.location.origin;
 
-/** Shareable link, QR code, "Share on X", and a preview of the v2 embed snippet. */
+/** Shareable link, QR code, "Share on X", and the embeddable "Message me" badge. */
 export function SharePanel({ address, price, handle }: { address: Address; price: bigint; handle?: string | null }) {
   const origin = useSyncExternalStore(() => () => {}, getOrigin, () => SITE_URL);
   const link = handle ? `${origin}/@${handle}` : `${origin}/${address}`;
   const tweet = encodeURIComponent(
     `My inbox now has a price: ${formatStampPrice(price)} in USDC on Arc. Genuine messages get refunded; spam pays me.\n\nMessage me with a stamp 👇\n${link}`,
   );
-  const embed = `<a href="${link}" data-stamp-button>Message me with Stamp</a>\n<script src="${origin}/embed.js" async></script>`;
+  const badge = `${origin}/badge/${handle ?? address}`;
+  const markdown = `[![Message me on Stamp](${badge})](${link})`;
+  const html = `<a href="${link}"><img src="${badge}" alt="Message me on Stamp" height="24"></a>`;
 
   return (
     <div className="space-y-8">
@@ -52,13 +54,27 @@ export function SharePanel({ address, price, handle }: { address: Address; price
       </div>
 
       <div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">Embed a “Message me” button</p>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">v2 · coming soon</span>
+        <p className="text-sm font-medium">“Message me” badge</p>
+        <p className="mt-1 text-xs text-muted-foreground">Shows your live price. Paste it in a GitHub README, your site or an email signature.</p>
+        {/* eslint-disable-next-line @next/next/no-img-element -- live SVG from our own badge route */}
+        <img src={badge} alt="Message me on Stamp badge preview" height={24} className="mt-3 h-6 w-auto" />
+        <div className="mt-3 space-y-2">
+          {[
+            ["Markdown", markdown],
+            ["HTML", html],
+          ].map(([label, code]) => (
+            <div key={label} className="flex items-start gap-2">
+              <pre
+                tabIndex={0}
+                aria-label={`${label} badge code`}
+                className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-dashed border-border bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground"
+              >
+                {code}
+              </pre>
+              <CopyButton value={code} label={`Copy ${label}`} className="h-9 shrink-0 rounded-lg" />
+            </div>
+          ))}
         </div>
-        <pre tabIndex={0} aria-label="Embed code" className="mt-2 overflow-x-auto rounded-xl border border-dashed border-border bg-muted/50 p-4 text-xs leading-relaxed text-muted-foreground">
-          {embed}
-        </pre>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Keyboard, Settings2 } from "lucide-react";
+import { Keyboard, Settings2, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
@@ -10,6 +10,9 @@ import { MoneyBurst } from "@/components/stamp/money-burst";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SharePanel } from "@/components/setup/share-panel";
+import { useMe } from "@/hooks/use-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadOlder } from "@/components/stamp/load-older";
@@ -41,6 +44,9 @@ export function InboxDashboard() {
   const [celebrate, setCelebrate] = useState<bigint | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const { data: me } = useMe();
+  const handle = me && address && me.address.toLowerCase() === address.toLowerCase() ? me.handle : null;
   const listRef = useRef<HTMLDivElement>(null);
 
   const all = useMemo(() => items ?? [], [items]);
@@ -176,6 +182,11 @@ export function InboxDashboard() {
           >
             <Keyboard aria-hidden="true" />
           </Button>
+          {info?.open && (
+            <Button variant="outline" onClick={() => setShareOpen(true)} className="rounded-lg">
+              <Share2 aria-hidden="true" /> Share
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setSettingsOpen(true)} className="rounded-lg">
             <Settings2 aria-hidden="true" /> Settings
           </Button>
@@ -297,6 +308,19 @@ export function InboxDashboard() {
       </Tabs>
 
       <ShortcutsDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      {info?.open && address && (
+        <Sheet open={shareOpen} onOpenChange={setShareOpen}>
+          <SheetContent className="w-full overflow-y-auto bg-card sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle className="font-display text-3xl font-bold">Share your inbox</SheetTitle>
+              <SheetDescription>Your link, a QR code and a badge that shows your live price.</SheetDescription>
+            </SheetHeader>
+            <div className="px-4 pb-8">
+              <SharePanel address={address} price={info.price} handle={handle} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       {info && <InboxSettings key={`${info.open}-${info.price}-${info.bio}`} open={settingsOpen} onOpenChange={setSettingsOpen} info={info} />}
     </div>
   );

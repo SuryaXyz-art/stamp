@@ -107,12 +107,12 @@ export function Receipt({ id }: { id: bigint }) {
           {item.message === undefined ? (
             <Skeleton className="h-16 rounded-xl" />
           ) : (
-            <p className="text-lg leading-relaxed break-words whitespace-pre-wrap">{item.message}</p>
+            <p className="text-lg leading-relaxed wrap-anywhere whitespace-pre-wrap">{item.message}</p>
           )}
           {item.reply && (
             <div className="mt-6 rounded-lg border border-lime/30 bg-lime/5 px-4 py-3">
               <p className="kicker mb-1 text-lime-ink">Reply</p>
-              <p className="break-words whitespace-pre-wrap">{item.reply}</p>
+              <p className="wrap-anywhere whitespace-pre-wrap">{item.reply}</p>
             </div>
           )}
         </div>

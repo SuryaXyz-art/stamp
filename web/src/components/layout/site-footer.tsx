@@ -45,6 +45,9 @@ export function SiteFooter() {
             <a className={linkClass} href="https://docs.arc.io" target="_blank" rel="noopener">
               Arc docs
             </a>
+            <Link className={linkClass} href="/developers">
+              Developers
+            </Link>
             <Link className={linkClass} href="/privacy">
               Privacy
             </Link>

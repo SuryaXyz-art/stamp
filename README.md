@@ -47,6 +47,18 @@ Stamp only works because of four things Arc does differently:
 
 > **Decimals:** Arc's native USDC (used for gas and `msg.value`) has **18 decimals**. Arc also exposes a 6-decimal ERC-20 view of USDC. Stamp uses the native balance exclusively: `parseEther("1")` is exactly $1.00, and the app shows one USDC balance.
 
+## For developers and AI agents
+
+Stamp is also a way for **agents to pay to reach humans**. An outreach bot puts down a refundable deposit instead of spamming for free. No API key, and the server never signs or holds anything.
+
+```bash
+curl "https://stamp-arc.vercel.app/api/v1/stamp?to=@alice&message=Hi%20Alice"
+# → recipient, live price, rules, and tx: { chainId, to, value, data } ready for any wallet to sign
+```
+
+- **`GET /api/v1/stamp`** (public, CORS open): resolves an address or `@handle`, returns the inbox price and, with `message`, a ready-to-sign `send()` transaction. Full guide with a viem agent example at **`/developers`**.
+- **`GET /badge/<address|handle>`**: an SVG "Message me" badge with your live price, for GitHub READMEs, sites and email signatures (`?theme=light` for light backgrounds).
+
 ## Architecture
 
 The contract is the product: every stamp, payment and settlement lives on Arc, and the server never holds funds, keys or message plaintext. A small Next.js backend adds optional accounts on top: Privy sign-in (X, Discord, Google, email, passkeys, wallets) with self-custodial embedded wallets, `/@handle` profiles bound to a wallet by signature, and settings. Without its keys the app still runs as a pure wallet client.
@@ -162,9 +174,10 @@ cast wallet import stamp-deployer --interactive        # encrypted keystore, nev
 cd contracts
 forge script script/Deploy.s.sol --rpc-url arc_testnet --account stamp-deployer --broadcast \
   --verify --verifier blockscout --verifier-url https://explorer.testnet.arc.io/api/
-# record address + block in deployments/arc-testnet.json, then:
-pnpm abi
+pnpm record testnet     # writes deployments/arc-testnet.json from the broadcast log and regenerates the web artifacts
 ```
+
+Mainnet is the same with `--rpc-url arc_mainnet`, `--verifier-url https://explorer.arc.io/api/` and `pnpm record mainnet`. Once `deployments/arc-mainnet.json` exists, the app opens on mainnet by default. Step-by-step launch checklist: [docs/SUBMISSION.md](docs/SUBMISSION.md).
 
 ## FAQ
 
@@ -178,7 +191,7 @@ pnpm abi
 
 **Is there a fee?** No. Stamp takes nothing. You only pay Arc's network fee, a fraction of a cent.
 
-**Can AI agents use this?** Yes. Anything that can sign an Arc transaction can send a stamp. An agent SDK is on the roadmap.
+**Can AI agents use this?** Yes. `GET /api/v1/stamp?to=@handle&message=…` returns a ready-to-sign transaction, and anything that can sign an Arc transaction can send it. See `/developers`.
 
 ## Troubleshooting
 
@@ -199,10 +212,9 @@ pnpm abi
 ## Roadmap
 
 - **Encrypted messages:** ECIES to the receiver's public key, so only they can read it.
-- **Embeddable "Message me with Stamp" button** for sites, READMEs and link-in-bio pages.
 - **Allowlist / free tier** for followers, contacts, or past correspondents.
-- **AI-agent SDK + HTTP 402-style API** so agents pay to reach humans programmatically.
-- **Handles:** ENS-style names instead of `0x…` links.
+- **Agent SDK + HTTP 402 flow** on top of today's quote API, so agents can negotiate and pay in one round trip.
+- **Cross-chain funding** with Circle's Bridge Kit (CCTP), so senders can pay from any chain.
 - **Notifications:** email and Telegram when a stamped message arrives.
 
 ## Project structure
@@ -210,7 +222,7 @@ pnpm abi
 ```
 stamp/
 ├── contracts/          Foundry: src/StampBox.sol, test/, script/, deployments/
-├── web/                Next.js 16 app (App Router, Tailwind 4, shadcn/ui, wagmi + viem, RainbowKit)
+├── web/                Next.js 16 app (App Router, Tailwind 4, shadcn/ui, wagmi + viem, Privy, Drizzle)
 ├── .github/workflows/  CI: forge fmt/test/coverage/snapshot + web lint/typecheck/build
 └── README.md
 ```

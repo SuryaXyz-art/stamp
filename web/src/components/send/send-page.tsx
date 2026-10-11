@@ -210,7 +210,7 @@ function SendPageInner({ to, profile }: Props) {
             </div>
           </div>
           {profile && profile.badges.length > 0 && <VerifiedBadges badges={profile.badges} className="mt-3" />}
-          {inbox?.bio && <p className="mt-3 text-lg text-pretty">{inbox.bio}</p>}
+          {inbox?.bio && <p className="mt-3 text-lg text-pretty wrap-anywhere">{inbox.bio}</p>}
           <p className="mt-2 text-sm text-muted-foreground">
             Charges a <span className="font-mono font-medium text-foreground">{formatUsdc(price, { suffix: true })}</span> refundable stamp to reach them.
           </p>
