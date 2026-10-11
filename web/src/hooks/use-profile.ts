@@ -10,7 +10,7 @@ export function useFeatures() {
     queryKey: ["features"],
     staleTime: Infinity,
     retry: 1,
-    queryFn: () => api<Features>("/api/health").catch((): Features => ({ auth: false, db: false, accounts: false, rateLimit: false })),
+    queryFn: () => api<Features>("/api/health").catch((): Features => ({ auth: false, db: false, accounts: false, rateLimit: false, circle: false })),
   });
 }
 

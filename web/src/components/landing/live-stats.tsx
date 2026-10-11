@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePublicStats } from "@/hooks/use-public-chain";
+import { LatestActivity } from "./latest-activity";
 import { useNetwork } from "@/components/providers/network-provider";
 import { formatUsdc, shortAddress } from "@/lib/format";
 
@@ -40,6 +41,7 @@ export function LiveStats() {
           ))}
         </dl>
       )}
+      <LatestActivity />
       <p className="mt-3 flex items-center gap-2 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
         <span className="relative flex size-2" aria-hidden="true">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-lime opacity-60" />

@@ -110,6 +110,7 @@ stateDiagram-v2
 - **Message and reply text live only in event logs**, which keeps sends cheap. The app reads ids and status from view functions, then fetches text with `eth_getLogs` filtered by indexed `id`. It scans in chunks and halves a chunk if the RPC rejects the range, and it estimates the starting block from `sentAt` to avoid scanning from genesis.
 - **Live stats** on the landing page come from four lifetime counters (`totalSent`, `totalRefunded`, `totalKept`, `totalReclaimed`), read through `/api/chain/stats` so the landing page ships no chain or wallet library.
 - **Accounts** (all optional, each feature hides itself when its key is missing): Privy tokens are ES256 JWTs verified locally against the app's verification key on every API request; our own `stamp_session` cookie is HttpOnly + SameSite=Lax and every write needs a matching `x-csrf-token` (double submit) and a same-origin `Origin`. Handles are ASCII `[a-z0-9_]{3,20}` with a reserved list, bound to a wallet by an EIP-191 signature that anyone can re-verify. We store no emails or OAuth tokens. See [PRIVACY.md](PRIVACY.md).
+- **Circle Contracts + webhooks:** StampBox is imported into Circle's Developer Console with event monitors on `Sent` and `Settled`. Circle POSTs each log to `/api/webhooks/circle`; the app verifies the ECDSA signature, stores public event data (never message text), and shows it as **Latest on Arc** on the landing page. `pnpm launch circle` sets all of it up.
 - **Bundle discipline:** wallet and auth code (Privy, wagmi) is a separate chunk loaded only on wallet pages, on "Sign in", or for returning signed-in visitors. The landing page scores 91+ on Lighthouse mobile.
 
 ## Security model
@@ -168,6 +169,8 @@ forge snapshot                                   # gas snapshot in .gas-snapshot
 Gas (median): `send` 188k · `refund` 74k · `keep` 68k · `reclaim` 68k · `withdraw` 29k · `openInbox` 70k.
 
 ## Deploying your own
+
+The quick path: copy `.env.example` to `.env` in the repo root, fill it in, and run `pnpm launch check`. It walks you through `deploy`, `publish`, `env`, `db` and `circle` (see [docs/SUBMISSION.md](docs/SUBMISSION.md)). The manual path:
 
 ```bash
 cast wallet import stamp-deployer --interactive        # encrypted keystore, never a raw key in .env

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, index, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 /**
  * Off-chain profile data only. Funds, keys and message plaintext never touch this database.
@@ -56,3 +56,33 @@ export const users = pgTable(
 );
 
 export type User = typeof users.$inferSelect;
+
+export type ChainEventKind = "sent" | "settled";
+export type StampStatusName = "pending" | "refunded" | "kept" | "reclaimed";
+
+/**
+ * StampBox events delivered by Circle's Contracts event monitors (signed webhooks). Public chain data only: no
+ * message text is stored, just enough for the "Latest on Arc" feed. The chain stays the source of truth.
+ */
+export const chainEvents = pgTable(
+  "chain_events",
+  {
+    network: text("network").$type<"mainnet" | "testnet">().notNull(),
+    /** uint256 stamp id as a decimal string. */
+    stampId: text("stamp_id").notNull(),
+    kind: text("kind").$type<ChainEventKind>().notNull(),
+    status: text("status").$type<StampStatusName>().notNull(),
+    /** Sender for "sent", the settling party for "settled". Lower-case 0x. */
+    actor: text("actor").notNull(),
+    /** Receiver; only on "sent". */
+    receiver: text("receiver"),
+    /** 18-decimal native USDC as a decimal string; only on "sent". */
+    amount: text("amount"),
+    txHash: text("tx_hash").notNull(),
+    blockNumber: bigint("block_number", { mode: "number" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.network, t.stampId, t.kind] }), index("chain_events_recent_idx").on(t.network, t.blockNumber)],
+);
+
+export type ChainEvent = typeof chainEvents.$inferSelect;

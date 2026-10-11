@@ -6,7 +6,7 @@ import type { PrivateProfile, PublicProfile } from "@/lib/server/users";
 
 export type { PrivateProfile, PublicProfile };
 
-export type Features = { auth: boolean; db: boolean; accounts: boolean; rateLimit: boolean };
+export type Features = { auth: boolean; db: boolean; accounts: boolean; rateLimit: boolean; circle: boolean };
 
 export class ApiError extends Error {
   constructor(

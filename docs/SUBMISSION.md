@@ -5,25 +5,24 @@ Program: [Arc Microgrants on DoraHacks](https://dorahacks.io/hackathon/arc-micro
 Eligibility: **deployed and working on Arc mainnet**, a **live link** and a **public repo**. Testnet-only projects are not eligible.
 Reviewers weigh: relevance to Arc, technical credibility, build quality, and whether the project is worth supporting further.
 
-## 1. Deploy StampBox to Arc mainnet (about 5 minutes, a few cents of USDC)
+## The short version: one file, a few commands
 
-You need a deployer wallet with a little native USDC on Arc mainnet (gas is paid in USDC; the deploy costs well under $0.10).
-
-```powershell
-cast wallet import stamp-deployer --interactive    # once; encrypted keystore, never a raw key in a file
-cd contracts
-forge test                                          # 70/70 should pass
-forge script script/Deploy.s.sol --rpc-url arc_mainnet --account stamp-deployer --broadcast
-pnpm record mainnet                                 # writes deployments/arc-mainnet.json + regenerates web/src/generated
-```
-
-Optional, and worth it for credibility: verify the source on the explorer.
+Everything reads one file: **`.env` in the repo root** (start from `.env.example`; it's gitignored). Paste keys there, then:
 
 ```powershell
-forge verify-contract <ADDRESS> src/StampBox.sol:StampBox --chain-id 5042 --verifier blockscout --verifier-url https://explorer.arc.io/api/
+pnpm launch check     # what's set, deployer balance, what's left; run it any time
+pnpm launch deploy    # StampBox → Arc mainnet, recorded in the app, source verified on explorer.arc.io
+pnpm launch publish   # creates the public GitHub repo and pushes main (needs GITHUB_TOKEN)
+pnpm launch env       # writes web/.env.local and web/.env.vercel (paste the latter into Vercel)
+pnpm launch db        # creates the tables in Neon (only if you use DATABASE_URL)
+pnpm launch circle    # registers StampBox in Circle's Developer Console + event monitors + webhook
 ```
 
-Once `deployments/arc-mainnet.json` exists, the app opens on mainnet by default, and the footer toggle still offers testnet.
+## 1. Deploy StampBox to Arc mainnet
+
+Make a **fresh wallet** used only for deploying, put its private key in `DEPLOYER_PRIVATE_KEY`, and send it **at least $0.20 of USDC on Arc mainnet** (USDC is the gas token; the deploy measured ~$0.09). StampBox has no owner, so this wallet holds no power afterwards. Then run `pnpm launch deploy`. It refuses to run without enough balance, checks the RPC really is chain 5042, writes `contracts/deployments/arc-mainnet.json`, and the app opens on mainnet from then on. Commit that file and `web/src/generated/`.
+
+Prefer an encrypted keystore instead of a key in `.env`? `forge script script/Deploy.s.sol --rpc-url arc_mainnet --account <name> --broadcast`, then `pnpm --filter @stamp/contracts record mainnet`.
 
 ## 2. Put real activity on mainnet
 
@@ -31,37 +30,25 @@ Reviewers click around. An empty contract reads like a demo, while a few real se
 
 1. Open your own inbox on mainnet at a low price (for example $0.10 via "Custom") with a headline like "Builder of Stamp. I refund every genuine message."
 2. From a second wallet, send it 2 or 3 stamps. Refund one with a reply, keep one as spam, and leave one pending. Every state then has a real receipt.
-3. Use that inbox as the demo inbox: set `NEXT_PUBLIC_DEMO_INBOX=<your address>` in Vercel (step 4).
+3. Put that inbox address in `NEXT_PUBLIC_DEMO_INBOX`.
 
 ## 3. Publish the repo
 
-Create an empty public repo at github.com/new (for example `stamp`), then:
-
-```powershell
-git remote add origin https://github.com/<you>/stamp.git
-git push -u origin main
-```
-
-Merge `feat/v2-enhancements` into `main` first, or push the branch and make it the default.
+With `GITHUB_TOKEN` set, `pnpm launch publish` creates `github.com/<you>/<GITHUB_REPO>` (public) and pushes your current branch as `main`. It refuses if you have uncommitted changes or if any secret from your `.env` files appears in the git history. The token is used for that one push and isn't saved in git config. Without a token: create an empty public repo on github.com, then `git remote add origin <url>` and `git push -u origin HEAD:main`.
 
 ## 4. Deploy the web app on Vercel
 
-Import the repo at vercel.com/new and set **Root Directory = `web`**. Environment variables:
+vercel.com/new → import the repo → **Root Directory: `web`** → Deploy. Put the resulting URL in `NEXT_PUBLIC_SITE_URL`, run `pnpm launch env`, paste **all of `web/.env.vercel`** into Project → Settings → Environment Variables (Vercel accepts a pasted .env), then redeploy. If you use Privy, add the Vercel domain to its allowed origins.
 
-| Variable | Value | Needed? |
-|---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://<your-project>.vercel.app` | Yes (share links, OG cards, badge URLs) |
-| `NEXT_PUBLIC_REPO_URL` | `https://github.com/<you>/stamp` | Yes (footer, developers page) |
-| `NEXT_PUBLIC_DEMO_INBOX` | your mainnet inbox address | Strongly recommended |
-| `NEXT_PUBLIC_ARC_MAINNET_RPC` | a provider endpoint (Alchemy, QuickNode, dRPC) | Recommended: the public RPC rate-limits log scans |
-| `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_VERIFICATION_KEY`, `PRIVY_APP_SECRET` | from dashboard.privy.io | For social sign-in, handles and settings. Add your Vercel domain to Privy's allowed origins. |
-| `SESSION_SECRET` | `node -e "console.log(require('crypto').randomBytes(36).toString('base64url'))"` | With Privy |
-| `DATABASE_URL` | Neon connection string, then run `pnpm --filter web db:migrate` once | With Privy |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Upstash | Recommended in production (rate limits) |
+## 4b. Circle Developer Console
 
-Without the Privy, database and Upstash keys, the app still works fully as a wallet app; account features hide themselves.
+Create a **mainnet** API key at console.circle.com → Keys (it starts with `LIVE_API_KEY:`) and put it in `CIRCLE_API_KEY`. After the Vercel deploy (so the webhook URL exists and has the key), run `pnpm launch circle`. It:
 
-Then replace the placeholders in `README.md`: the live app link, the mainnet explorer link for the contract and the demo video link.
+- imports StampBox into **Circle Contracts** on `ARC`, so it appears under Contracts in the console with its ABI and events;
+- creates **event monitors** for `Sent` and `Settled`;
+- subscribes `https://<your site>/api/webhooks/circle` to `contracts.eventLog`. The app verifies Circle's ECDSA signature on every delivery and keeps public event data (no message text) for the **Latest on Arc** list on the landing page. Deliveries show under **Contracts → Monitoring** in the console.
+
+With a testnet key (`TEST_API_KEY:`), `pnpm launch circle --testnet` does the same for the testnet deployment.
 
 ## 5. Smoke-test the live site (2 minutes)
 
@@ -71,6 +58,7 @@ Then replace the placeholders in `README.md`: the live app link, the mainnet exp
 - [ ] `/api/v1/stamp?to=<your address>&message=hi` returns JSON with `tx`.
 - [ ] `/badge/<your address>` shows your price.
 - [ ] Paste your inbox link into X or Discord: the OG card renders.
+- [ ] Send one more stamp: within seconds it shows under **Latest on Arc** on the landing page and under Contracts → Monitoring in console.circle.com.
 
 ## 6. DoraHacks BUIDL form copy
 
@@ -90,7 +78,7 @@ Then replace the placeholders in `README.md`: the live app link, the mainnet exp
 
 > A $1 refundable deposit only makes sense on Arc. USDC is the gas token, so a sender needs exactly one asset: dollars. Fees are a fraction of a cent, so a $0.25 stamp is economically sane, while on most chains the gas would cost more than the stamp. Sub-second deterministic finality means a stamp is delivered like a DM, with no confirmation spinners. And the stamp rides along as native USDC through `msg.value`: no approve, no allowance.
 
-**Circle and Arc stack used:** Arc mainnet (native USDC for gas and value), Circle's USDC faucet for testnet onboarding, Arc's 18-decimal native USDC (deliberately not the 6-decimal ERC-20 view), and the Arc explorer for receipts.
+**Circle and Arc stack used:** Arc mainnet (native USDC for gas and value; deliberately the 18-decimal native balance, not the 6-decimal ERC-20 view), **Circle Contracts** (StampBox imported into the Developer Console, with event monitors on `Sent` and `Settled`), **Circle webhooks** (ECDSA-verified `contracts.eventLog` deliveries power the live activity feed), Circle's USDC faucet for testnet onboarding, and the Arc explorer for receipts.
 
 **Tech:** Solidity 0.8.30 + Foundry (unit, fuzz, invariant and reentrancy tests; 100% coverage), Next.js 16, viem/wagmi, Privy (social, email and passkey sign-in with self-custodial embedded wallets), Drizzle + Postgres for optional profiles and handles, strict nonce-based CSP, CodeQL, gitleaks and Dependabot in CI.
 

@@ -17,6 +17,8 @@ const schema = z.object({
   DATABASE_URL: z.string().trim().optional(),
   UPSTASH_REDIS_REST_URL: z.string().trim().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().trim().optional(),
+  /** Circle Developer Console API key; verifies Circle's signed webhooks (contract event monitors). */
+  CIRCLE_API_KEY: z.string().trim().optional(),
 });
 
 function read() {
@@ -31,6 +33,7 @@ function read() {
     databaseUrl: empty(e.DATABASE_URL),
     upstashUrl: empty(e.UPSTASH_REDIS_REST_URL),
     upstashToken: empty(e.UPSTASH_REDIS_REST_TOKEN),
+    circleApiKey: empty(e.CIRCLE_API_KEY),
     isProd: process.env.NODE_ENV === "production",
   };
 }
@@ -56,5 +59,7 @@ export function features() {
     /** Accounts (profiles, handles, settings) need both sign-in and storage. */
     accounts: auth && Boolean(e.databaseUrl),
     rateLimit: Boolean(e.upstashUrl && e.upstashToken),
+    /** Circle webhooks feed the activity index; they need the API key (signature check) and storage. */
+    circle: Boolean(e.circleApiKey && e.databaseUrl),
   };
 }

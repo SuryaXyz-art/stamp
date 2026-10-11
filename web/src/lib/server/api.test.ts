@@ -105,7 +105,7 @@ afterAll(() => {
 describe("health", () => {
   it("reports which features are on", async () => {
     const { GET } = await routes.health();
-    expect(await (await GET(req("/api/health"))).json()).toEqual({ auth: true, db: true, accounts: true, rateLimit: false });
+    expect(await (await GET(req("/api/health"))).json()).toEqual({ auth: true, db: true, accounts: true, rateLimit: false, circle: false });
   });
 });
 
