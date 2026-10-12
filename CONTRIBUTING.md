@@ -5,7 +5,7 @@ Thanks for helping! Stamp is small on purpose: one immutable contract and a stat
 ## Setup
 
 ```bash
-git clone --recurse-submodules https://github.com/ritikpandey/stamp && cd stamp
+git clone --recurse-submodules https://github.com/SuryaXyz-art/stamp && cd stamp
 pnpm install
 pnpm dev
 ```

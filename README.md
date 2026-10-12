@@ -4,7 +4,7 @@
 
 **A refundable paid inbox on Arc.** Strangers attach a small USDC stamp to message you. Reply and they get it back. Mark it spam and you keep it.
 
-[![CI](https://github.com/ritikpandey/stamp/actions/workflows/ci.yml/badge.svg)](https://github.com/ritikpandey/stamp/actions/workflows/ci.yml)
+[![CI](https://github.com/SuryaXyz-art/stamp/actions/workflows/ci.yml/badge.svg)](https://github.com/SuryaXyz-art/stamp/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-0F1B2D)
 ![Coverage](https://img.shields.io/badge/contract%20coverage-100%25-1C7C45)
 ![Arc](https://img.shields.io/badge/built%20on-Arc-2775CA)
@@ -138,7 +138,7 @@ stateDiagram-v2
 Prerequisites: Node ≥ 20.9, pnpm (`npm i -g pnpm`), and [Foundry](https://getfoundry.sh) for the contracts.
 
 ```bash
-git clone --recurse-submodules https://github.com/ritikpandey/stamp && cd stamp
+git clone --recurse-submodules https://github.com/SuryaXyz-art/stamp && cd stamp
 pnpm install
 pnpm dev            # http://localhost:3000, talks to Arc with zero config
 ```

@@ -70,7 +70,7 @@ export const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PR
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://stamp-arc.vercel.app").replace(/\/$/, "");
 
 /** Public source repository (footer + README links). */
-export const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ritikpandey/stamp";
+export const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/SuryaXyz-art/stamp";
 
 /** Privy app id (public). Without it, sign-in falls back to browser wallets only and account features stay off. */
 export const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
