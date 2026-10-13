@@ -1,6 +1,6 @@
 # Contributing to Stamp
 
-Thanks for helping! Stamp is small on purpose: one immutable contract and a static web app. Please keep it that way.
+Thanks for helping out! Stamp is small on purpose: one immutable contract and a lean web app on top of it. Please help keep it that way.
 
 ## Setup
 

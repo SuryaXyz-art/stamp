@@ -2,66 +2,89 @@
 
 # Stamp
 
-**A refundable paid inbox on Arc.** Strangers attach a small USDC stamp to message you. Reply and they get it back. Mark it spam and you keep it.
+**A refundable paid inbox on Arc.**
+
+Strangers attach a small USDC stamp to message you. Reply and they get it back. Mark it as spam and you keep it.
 
 [![CI](https://github.com/SuryaXyz-art/stamp/actions/workflows/ci.yml/badge.svg)](https://github.com/SuryaXyz-art/stamp/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-0F1B2D)
-![Coverage](https://img.shields.io/badge/contract%20coverage-100%25-1C7C45)
-![Arc](https://img.shields.io/badge/built%20on-Arc-2775CA)
+![Contract coverage](https://img.shields.io/badge/contract%20coverage-100%25-1C7C45)
+![Built on Arc](https://img.shields.io/badge/built%20on-Arc-2775CA)
 
-**[Live app →](https://stamp-arc.vercel.app)** · **[StampBox on Arc Testnet](https://explorer.testnet.arc.io)** · [Demo video](#)
-
-<!-- Hero GIF: docs/hero.gif (recorded during launch) -->
+[StampBox on Arc Testnet](https://explorer.testnet.arc.io/address/0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B) · [Deploy guide](docs/DEPLOYMENT.md) · [Security](SECURITY.md)
 
 </div>
 
 ---
 
-## Try it in 30 seconds
+## Contents
 
-1. Open the **[live app](https://stamp-arc.vercel.app)**, then pick **Testnet** in the footer. It's free.
-2. Get test USDC from **[Circle's faucet](https://faucet.circle.com)** (choose *Arc Testnet*).
-3. Click **Try the demo inbox**, write a message, and hit **Send with $1 stamp**. It's delivered in under a second.
-4. When I reply, your $1 comes straight back. Watch it happen on your **Sent** page.
+- [The idea](#the-idea)
+- [How it works](#how-it-works)
+- [Why Arc](#why-arc)
+- [For developers and AI agents](#for-developers-and-ai-agents)
+- [Architecture](#architecture)
+- [Security model](#security-model)
+- [Run it locally](#run-it-locally)
+- [Tests](#tests)
+- [Deploying your own](#deploying-your-own)
+- [FAQ](#faq)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [Project structure](#project-structure)
 
-Want your own? **Open my inbox** → pick a price → share your link.
+## The idea
 
-## Why
+My DMs are mostly cold pitches, and more and more of them are written by bots. Filters keep losing that fight because sending a message costs nothing.
 
-Cold DMs and AI-agent spam are exploding, and filters keep losing. Stamp prices attention instead: a stranger puts down a small, refundable deposit to reach you.
+Stamp puts a price on attention instead. To reach you, a stranger puts down a small deposit in USDC, at a price you choose. What happens to it depends on what you do:
 
-- **Genuine senders pay nothing.** Reply and the stamp is refunded in the same transaction.
-- **Spammers pay you.** Mark a message as spam and you keep the stamp.
-- **Nobody can hold it hostage.** If you ignore a message for 7 days, the sender can reclaim the stamp themselves.
+- **You reply.** The stamp goes straight back to the sender in the same transaction, so a genuine message costs them nothing.
+- **You mark it as spam.** You keep the stamp, so the spammer has paid you for your time.
+- **You ignore it.** After 7 days the sender can take the stamp back themselves, so nobody's money gets stuck.
 
-## How it uses Arc
+## How it works
 
-Stamp only works because of four things Arc does differently:
+1. **Open an inbox.** Pick a price (for example $1) and an optional one-line headline. You get a link like `/@alice` or `/0x…` to share.
+2. **Someone sends a stamp.** They write a message and pay the stamp in one transaction. On Arc it lands in under a second.
+3. **You triage.** Reply, keep or ignore each message from your inbox. There are keyboard shortcuts and batch actions for clearing a backlog.
+4. **Everyone gets a receipt.** Each stamp has a public page at `/stamp/<id>` that links to its transactions on the Arc explorer.
 
-| | Why it matters for a $1 stamp |
+You can sign in with a wallet, or with X, Discord, Google, email or a passkey through Privy, which creates a self-custodial wallet for you. Accounts are optional, and the app works as a plain wallet client without them.
+
+## Why Arc
+
+Stamp only makes sense because of how Arc works:
+
+| Arc feature | What it means for a $1 stamp |
 |---|---|
-| **USDC is the gas token** | A sender needs exactly one asset: dollars. No ETH or second token to acquire first. |
-| **Tiny, dollar-denominated fees** | On most chains the gas would cost more than the stamp. On Arc a $1 (or $0.25) stamp is economically sane. |
-| **Sub-second deterministic finality** | Sending a stamp feels like sending a DM. One confirmation is final, so the UI shows *Delivered ✓* immediately with no confirmation spinners. |
-| **Native USDC via `msg.value`** | The stamp rides along with the call. No `approve` + `transferFrom` dance, no allowances. |
+| **USDC is the gas token** | A sender needs one asset, dollars. There's no second token to buy first. |
+| **Fees are tiny and priced in dollars** | On most chains the gas would cost more than the stamp. On Arc, a $0.25 stamp still makes sense. |
+| **Sub-second, deterministic finality** | Sending a stamp feels like sending a DM. One confirmation is final, so the UI can say *Delivered* right away. |
+| **Native USDC through `msg.value`** | The stamp travels with the call itself. There's no `approve` step and no allowance to manage. |
 
-> **Decimals:** Arc's native USDC (used for gas and `msg.value`) has **18 decimals**. Arc also exposes a 6-decimal ERC-20 view of USDC. Stamp uses the native balance exclusively: `parseEther("1")` is exactly $1.00, and the app shows one USDC balance.
+> **A note on decimals:** Arc's native USDC, used for gas and `msg.value`, has **18 decimals**. Arc also exposes a 6-decimal ERC-20 view of USDC. Stamp only uses the native balance, so `parseEther("1")` is exactly $1.00.
 
 ## For developers and AI agents
 
-Stamp is also a way for **agents to pay to reach humans**. An outreach bot puts down a refundable deposit instead of spamming for free. No API key, and the server never signs or holds anything.
+Stamp also gives automated outreach a fair way to reach people: an agent puts down a refundable deposit instead of spamming for free. There's no API key, and the server never signs or holds anything.
 
 ```bash
-curl "https://stamp-arc.vercel.app/api/v1/stamp?to=@alice&message=Hi%20Alice"
-# → recipient, live price, rules, and tx: { chainId, to, value, data } ready for any wallet to sign
+curl "https://<your-site>/api/v1/stamp?to=@alice&message=Hi%20Alice"
 ```
 
-- **`GET /api/v1/stamp`** (public, CORS open): resolves an address or `@handle`, returns the inbox price and, with `message`, a ready-to-sign `send()` transaction. Full guide with a viem agent example at **`/developers`**.
-- **`GET /badge/<address|handle>`**: an SVG "Message me" badge with your live price, for GitHub READMEs, sites and email signatures (`?theme=light` for light backgrounds).
+The response includes the recipient, their live price, the rules, and a ready-to-sign transaction (`{ chainId, to, value, data }`) that any wallet or agent can send.
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/v1/stamp` | Public and CORS-enabled. Resolves an address or `@handle`, returns the inbox price and, if you pass `message`, the `send()` transaction. |
+| `GET /badge/<address or handle>` | An SVG "Message me" badge showing your live price, for READMEs, websites and email signatures. Add `?theme=light` for light backgrounds. |
+
+The `/developers` page in the app has a full guide, including an example agent written with viem.
 
 ## Architecture
 
-The contract is the product: every stamp, payment and settlement lives on Arc, and the server never holds funds, keys or message plaintext. A small Next.js backend adds optional accounts on top: Privy sign-in (X, Discord, Google, email, passkeys, wallets) with self-custodial embedded wallets, `/@handle` profiles bound to a wallet by signature, and settings. Without its keys the app still runs as a pure wallet client.
+The contract is the product. Every stamp, payment and settlement lives on Arc, and the server never holds funds, keys or message text. A small Next.js backend adds optional extras on top: sign-in, `/@handle` profiles and settings.
 
 ```mermaid
 flowchart LR
@@ -75,90 +98,96 @@ flowchart LR
 
     subgraph Server["Next.js route handlers (no keys, no funds)"]
       API["/api/auth · /api/me · /api/handles<br/>Privy token verified on every call<br/>HttpOnly session + CSRF + zod"]
-      DB[("Postgres (Neon)<br/>profiles · handles")]
+      DB[("Postgres (Neon)<br/>profiles · handles · events")]
+      Hook["/api/webhooks/circle<br/>signature-verified"]
     end
 
     subgraph Arc["Arc L1 (USDC gas, sub-second finality)"]
-      Box[("StampBox.sol<br/>escrow + settlement state")]
-      Logs[["Event logs<br/>Sent · Settled<br/>(message & reply text)"]]
+      Box[("StampBox.sol<br/>escrow + settlement")]
+      Logs[["Event logs<br/>Sent · Settled<br/>(message and reply text)"]]
     end
 
+    Circle["Circle Contracts<br/>event monitors"]
+
     Send -- "send(to, msg) + msg.value" --> Box
-    Inbox -- "refund(id, reply) / keep(id) / batch*" --> Box
+    Inbox -- "refund / keep / batch" --> Box
     Sent -- "reclaim(id) after 7 days" --> Box
     Box -- emits --> Logs
-    Inbox & Sent & Receipt -- "inboxOf / outboxOf / getStamp" --> Box
-    Inbox & Sent & Receipt -- "eth_getLogs (chunked, filtered by indexed id/to)" --> Logs
+    Inbox & Sent & Receipt -- "views + eth_getLogs" --> Box
     Auth -- "access + identity token" --> API
     API --> DB
+    Logs -. watched by .-> Circle
+    Circle -- "contracts.eventLog" --> Hook
+    Hook --> DB
 ```
 
-**Lifecycle of a stamp**
+### Lifecycle of a stamp
 
 ```mermaid
 stateDiagram-v2
     [*] --> Pending: send() with msg.value ≥ price
-    Pending --> Refunded: refund(id, reply) · receiver
-    Pending --> Kept: keep(id) · receiver
-    Pending --> Reclaimed: reclaim(id) · sender, after 7 days
+    Pending --> Refunded: refund(id, reply) by the receiver
+    Pending --> Kept: keep(id) by the receiver
+    Pending --> Reclaimed: reclaim(id) by the sender, after 7 days
     Refunded --> [*]
     Kept --> [*]
     Reclaimed --> [*]
 ```
 
-- **Storage** holds only what settlement needs: `from`, `to`, `amount`, `sentAt`, `status` (3 slots), plus per-user id indexes.
-- **Message and reply text live only in event logs**, which keeps sends cheap. The app reads ids and status from view functions, then fetches text with `eth_getLogs` filtered by indexed `id`. It scans in chunks and halves a chunk if the RPC rejects the range, and it estimates the starting block from `sentAt` to avoid scanning from genesis.
-- **Live stats** on the landing page come from four lifetime counters (`totalSent`, `totalRefunded`, `totalKept`, `totalReclaimed`), read through `/api/chain/stats` so the landing page ships no chain or wallet library.
-- **Accounts** (all optional, each feature hides itself when its key is missing): Privy tokens are ES256 JWTs verified locally against the app's verification key on every API request; our own `stamp_session` cookie is HttpOnly + SameSite=Lax and every write needs a matching `x-csrf-token` (double submit) and a same-origin `Origin`. Handles are ASCII `[a-z0-9_]{3,20}` with a reserved list, bound to a wallet by an EIP-191 signature that anyone can re-verify. We store no emails or OAuth tokens. See [PRIVACY.md](PRIVACY.md).
-- **Circle Contracts + webhooks:** StampBox is imported into Circle's Developer Console with event monitors on `Sent` and `Settled`. Circle POSTs each log to `/api/webhooks/circle`; the app verifies the ECDSA signature, stores public event data (never message text), and shows it as **Latest on Arc** on the landing page. `pnpm launch circle` sets all of it up.
-- **Bundle discipline:** wallet and auth code (Privy, wagmi) is a separate chunk loaded only on wallet pages, on "Sign in", or for returning signed-in visitors. The landing page scores 91+ on Lighthouse mobile.
+### Design notes
+
+- **Storage holds only what settlement needs:** `from`, `to`, `amount`, `sentAt` and `status` (three storage slots), plus per-user indexes of stamp ids.
+- **Message and reply text live only in event logs**, which keeps sending cheap. The app reads ids and status from view functions, then fetches the text with `eth_getLogs` filtered by the indexed `id`. It scans in chunks, halves a chunk when the RPC rejects the range, and starts near the block where the stamp was sent instead of scanning from genesis.
+- **Live stats** on the landing page come from four lifetime counters in the contract (`totalSent`, `totalRefunded`, `totalKept`, `totalReclaimed`). They're served through `/api/chain/stats`, so the landing page doesn't load any wallet code.
+- **Accounts are optional,** and each feature hides itself when its keys are missing. Privy tokens are verified locally on every request. Our session cookie is HttpOnly and SameSite=Lax, and every write needs a matching CSRF token and a same-origin `Origin` header. Handles are bound to a wallet by an EIP-191 signature that anyone can re-check. We don't store emails or OAuth tokens. See [PRIVACY.md](PRIVACY.md).
+- **Circle Contracts and webhooks:** StampBox is imported into Circle's Developer Console with event monitors on `Sent` and `Settled`. Circle posts each event to `/api/webhooks/circle`. The app verifies Circle's ECDSA signature, stores only public event data, and shows the result as **Latest on Arc** on the landing page.
+- **Keeping it fast:** wallet and auth code loads as a separate chunk, only on pages that need a wallet. The landing page scores 91+ on Lighthouse mobile.
 
 ## Security model
 
-**Non-custodial, immutable, no admin keys.**
+**Non-custodial and immutable, with no admin keys.**
 
-- No owner, no admin functions, no fees, no pause, no upgradeability, no proxy. Nobody, including me, can move funds except through the rules below.
-- Funds held by the contract always equal the sum of `Pending` stamps plus deferred payouts (`totalOwed`). This is a fuzzed invariant, along with `sent − refunded − kept − reclaimed + owed == balance`.
-- Only the **receiver** can `refund` or `keep`. Only the **sender** can `reclaim`, and only after `TIMEOUT` (7 days) while still `Pending`. Every stamp settles exactly once.
-- Checks-effects-interactions on every payout, plus OpenZeppelin `ReentrancyGuard`. Tests include malicious receiver and sender contracts that attempt re-entry and are blocked.
-- Custom errors for every failure (`InboxClosed`, `StampTooSmall`, `NotReceiver`, `NotSender`, `TooEarly`, `AlreadySettled`, `TransferFailed`, `MessageTooLong`, `NothingOwed`, …).
-- **Overpaying:** if `msg.value` exceeds the receiver's price, the whole `msg.value` is the stamp and is refunded or kept in full.
-- **Price changes** never affect stamps already sent; each stamp stores its own amount.
-- **A sender who can't receive USDC never blocks settlement.** Refund and reclaim payouts are pushed with a bounded gas stipend (`PAYOUT_GAS` = 100k) through a call that doesn't copy return data. If the push fails (a contract without `receive()`, a Circle-blocklisted address, a gas-burning or return-bombing fallback), the stamp still settles, the amount is credited to `owed[sender]`, and `PaymentDeferred` is emitted. The sender pulls it later with `withdraw()`, or `withdrawTo(addr)` for a contract that can't receive at all. The app shows a "You have $X to withdraw" banner.
-- `batchRefund` settles every stamp even if some payouts are deferred. `keep` / `batchKeep` stay strict: the receiver is `msg.sender`, so a failed payout simply reverts.
+- There's no owner, no admin function, no fee, no pause switch and no proxy. Nobody, including me, can move funds outside the rules below.
+- The contract's balance always equals the sum of pending stamps plus deferred payouts (`totalOwed`). This is checked by fuzzed invariant tests.
+- Only the **receiver** can `refund` or `keep` a stamp. Only the **sender** can `reclaim` it, and only after 7 days while it's still pending. Every stamp settles exactly once.
+- Every payout follows checks-effects-interactions and sits behind OpenZeppelin's `ReentrancyGuard`. The tests include hostile sender and receiver contracts that try to re-enter and fail.
+- Every failure has a named custom error: `InboxClosed`, `StampTooSmall`, `NotReceiver`, `NotSender`, `TooEarly`, `AlreadySettled`, `MessageTooLong`, `NothingOwed` and more.
+- **Overpaying is safe.** If `msg.value` is above the price, the whole amount becomes the stamp and is refunded or kept in full.
+- **Price changes don't touch old stamps.** Each stamp records its own amount.
+- **A sender who can't receive USDC never blocks settlement.** Refunds and reclaims are sent with a capped gas allowance and without copying return data. If that payment fails (for example a contract without `receive()`, a blocklisted address or a fallback that burns gas), the stamp still settles and the amount is credited to `owed[sender]`. The sender collects it later with `withdraw()`, or with `withdrawTo(addr)` if their address can't receive at all.
 
-### Limitations (read these)
+### Limitations
 
-- **Messages are public.** Anything you write is visible on-chain forever. Don't include secrets. (Encrypted messages are on the roadmap.)
-- Stamps make spam expensive, not impossible. Someone willing to pay can still reach you, and you'll keep their money.
-- The 1,000-byte message limit is enforced on-chain, in bytes (an emoji counts as 4).
+- **Messages are public.** Everything you write is visible on-chain forever, so don't put secrets in a message. Encrypted messages are on the roadmap.
+- Stamps make spam expensive, not impossible. Someone willing to pay can still reach you, and you keep their money.
+- Messages are capped at 1,000 bytes on-chain. An emoji counts as 4 bytes.
 
-## Run it locally (3 commands)
+## Run it locally
 
-Prerequisites: Node ≥ 20.9, pnpm (`npm i -g pnpm`), and [Foundry](https://getfoundry.sh) for the contracts.
+You need Node 20.9 or newer, pnpm (`npm i -g pnpm`) and [Foundry](https://getfoundry.sh) for the contracts.
 
 ```bash
 git clone --recurse-submodules https://github.com/SuryaXyz-art/stamp && cd stamp
 pnpm install
-pnpm dev            # http://localhost:3000, talks to Arc with zero config
+pnpm dev            # http://localhost:3000
 ```
 
-No `.env` needed: the app defaults to the public Arc RPCs and the deployed contract addresses in `contracts/deployments/*.json`, with sign-in falling back to browser wallets. To turn on accounts, copy [`web/.env.example`](web/.env.example) to `web/.env.local` and fill in the Privy keys, a `SESSION_SECRET` and a `DATABASE_URL` (`pglite:./.data/pglite` works locally with nothing to install; use Neon + `pnpm db:migrate` in production).
+You don't need a `.env` file. By default the app uses Arc's public RPCs and the contract addresses in `contracts/deployments/`, and sign-in falls back to browser wallets. To turn on accounts, copy [`web/.env.example`](web/.env.example) to `web/.env.local` and fill in the Privy keys, a `SESSION_SECRET` and a `DATABASE_URL`. For local work, `DATABASE_URL=pglite:./.data/pglite` runs Postgres in-process with nothing to install.
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Next.js dev server |
-| `pnpm test` | `forge test` + web unit tests (Vitest) + typecheck + lint |
-| `pnpm build` | `forge build` + `next build` |
-| `pnpm abi` | Re-export the ABI and deployment addresses into the web app after a contract change or deploy |
-| `pnpm --filter web db:generate` / `db:migrate` | Generate / apply Drizzle migrations (Neon) |
+| `pnpm dev` | Starts the Next.js dev server |
+| `pnpm test` | Runs `forge test`, the web unit tests (Vitest), the type check and lint |
+| `pnpm build` | Runs `forge build` and `next build` |
+| `pnpm abi` | Re-exports the ABI and deployment addresses into the web app after a contract change or deploy |
+| `pnpm launch check` | Shows what's configured for a mainnet launch and what's still missing |
 
 ## Tests
 
 ```bash
 cd contracts
-forge test -vv                                   # 70 tests: unit, fuzz, reentrancy, payout-failure, invariants
-forge coverage --no-match-coverage "test/"       # 100% lines / statements / branches / functions
+forge test -vv                                   # 70 tests: unit, fuzz, reentrancy, payout failures, invariants
+forge coverage --no-match-coverage "test/"       # 100% lines, statements, branches and functions
 forge snapshot                                   # gas snapshot in .gas-snapshot
 ```
 
@@ -166,68 +195,94 @@ forge snapshot                                   # gas snapshot in .gas-snapshot
 |---|---|---|---|---|
 | `src/StampBox.sol` | 100% (113/113) | 100% (124/124) | 100% (22/22) | 100% (25/25) |
 
-Gas (median): `send` 188k · `refund` 74k · `keep` 68k · `reclaim` 68k · `withdraw` 29k · `openInbox` 70k.
+Median gas: `send` 188k · `refund` 74k · `keep` 68k · `reclaim` 68k · `withdraw` 29k · `openInbox` 70k.
+
+On the web side, Vitest covers the API routes (against an in-process Postgres), Privy token checks, CSRF, handle signatures, the Circle webhook signature, the public agent API, the CSP builder, money formatting and WCAG contrast for both themes.
 
 ## Deploying your own
 
-The quick path: copy `.env.example` to `.env` in the repo root, fill it in, and run `pnpm launch check`. It walks you through `deploy`, `publish`, `env`, `db` and `circle` (see [docs/SUBMISSION.md](docs/SUBMISSION.md)). The manual path:
+Copy `.env.example` to `.env` in the repo root, fill it in, and run `pnpm launch check`. It walks you through `deploy`, `env`, `db` and `circle`. The full guide is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+If you'd rather do it by hand with an encrypted keystore:
 
 ```bash
-cast wallet import stamp-deployer --interactive        # encrypted keystore, never a raw key in .env
+cast wallet import stamp-deployer --interactive
 cd contracts
 forge script script/Deploy.s.sol --rpc-url arc_testnet --account stamp-deployer --broadcast \
   --verify --verifier blockscout --verifier-url https://explorer.testnet.arc.io/api/
-pnpm record testnet     # writes deployments/arc-testnet.json from the broadcast log and regenerates the web artifacts
+pnpm record testnet     # writes deployments/arc-testnet.json and regenerates the web artifacts
 ```
 
-Mainnet is the same with `--rpc-url arc_mainnet`, `--verifier-url https://explorer.arc.io/api/` and `pnpm record mainnet`. Once `deployments/arc-mainnet.json` exists, the app opens on mainnet by default. Step-by-step launch checklist: [docs/SUBMISSION.md](docs/SUBMISSION.md).
+For mainnet, use `--rpc-url arc_mainnet`, `--verifier-url https://explorer.arc.io/api/` and `pnpm record mainnet`. Once `deployments/arc-mainnet.json` exists, the app opens on mainnet by default.
 
 ## FAQ
 
-**Do I need ETH or any other token?** No. Arc uses USDC for gas, so you only need USDC.
+**Do I need ETH or another token?**
+No. Arc uses USDC for gas, so USDC is all you need.
 
-**Where is my USDC while a message is pending?** In the StampBox contract, not with the receiver. It leaves only via refund, keep, or reclaim.
+**Where is my money while a message is pending?**
+In the StampBox contract, not with the receiver. It can only leave through a refund, a keep or a reclaim.
 
-**What if the receiver never answers?** After 7 days you can reclaim the stamp from your **Sent** page. The receiver can still reply or keep it until you do.
+**What if the receiver never answers?**
+After 7 days you can reclaim the stamp from your **Sent** page. Until you do, the receiver can still reply or keep it.
 
-**Can the receiver change the price after I've sent?** They can, but your stamp keeps the amount you sent.
+**Can the receiver change the price after I've sent?**
+Yes, but your stamp keeps the amount you sent.
 
-**Is there a fee?** No. Stamp takes nothing. You only pay Arc's network fee, a fraction of a cent.
+**Is there a fee?**
+No. Stamp takes nothing. You only pay Arc's network fee, which is a fraction of a cent.
 
-**Can AI agents use this?** Yes. `GET /api/v1/stamp?to=@handle&message=…` returns a ready-to-sign transaction, and anything that can sign an Arc transaction can send it. See `/developers`.
+**Can AI agents use this?**
+Yes. `GET /api/v1/stamp?to=@handle&message=…` returns a ready-to-sign transaction, and anything that can sign an Arc transaction can send it. See `/developers` in the app.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| **"Wrong network" banner** | Click **Switch to Arc**. If your wallet doesn't know Arc yet, use **Add Arc to wallet** in the footer. It adds the chain (ID `5042` mainnet / `5042002` testnet) in one click. |
-| **"Not enough USDC"** | You need the stamp amount plus a tiny fee. On testnet, use [faucet.circle.com](https://faucet.circle.com). On mainnet, bridge or withdraw USDC to Arc. |
-| **"This inbox is closed"** | The receiver isn't accepting new stamps. Nothing was charged. |
-| **Messages show a loading shimmer for a while** | The public RPC may be rate-limiting `eth_getLogs`. Set `NEXT_PUBLIC_ARC_TESTNET_RPC` / `NEXT_PUBLIC_ARC_MAINNET_RPC` to a provider endpoint. |
-| **No wallets in the connect dialog on mobile** | Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` to enable WalletConnect / mobile wallets. |
+| **"Wrong network" banner** | Click **Switch to Arc**. If your wallet doesn't know Arc yet, use **Add Arc to wallet** in the footer. It adds the chain (ID `5042` for mainnet, `5042002` for testnet) in one click. |
+| **"Not enough USDC"** | You need the stamp amount plus a tiny fee. On testnet, get USDC from [faucet.circle.com](https://faucet.circle.com). On mainnet, bridge or withdraw USDC to Arc. |
+| **"This inbox is closed"** | The receiver isn't accepting new stamps right now. You weren't charged. |
+| **Messages keep showing a loading shimmer** | The public RPC may be rate-limiting `eth_getLogs`. Set `NEXT_PUBLIC_ARC_TESTNET_RPC` or `NEXT_PUBLIC_ARC_MAINNET_RPC` to a provider endpoint. |
+| **No wallets in the connect dialog on mobile** | Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` to turn on WalletConnect for mobile wallets. |
 
-**Windows notes**
+**On Windows**
 
-- Use **Git Bash** or **WSL** for Foundry. `foundryup` installs to `~/.foundry/bin`; add it to `PATH`.
-- Clone with `--recurse-submodules` (or run `git submodule update --init --recursive`), otherwise `forge build` can't find OpenZeppelin.
-- The repo enforces LF line endings via `.gitattributes`, so `forge fmt --check` behaves the same as on CI.
+- Use Git Bash or WSL for Foundry. `foundryup` installs to `~/.foundry/bin`, so add that to your `PATH`.
+- Clone with `--recurse-submodules`, or run `git submodule update --init --recursive`. Otherwise `forge build` can't find OpenZeppelin.
+- The repo enforces LF line endings through `.gitattributes`, so `forge fmt --check` gives the same result locally as in CI.
 
 ## Roadmap
 
-- **Encrypted messages:** ECIES to the receiver's public key, so only they can read it.
-- **Allowlist / free tier** for followers, contacts, or past correspondents.
-- **Agent SDK + HTTP 402 flow** on top of today's quote API, so agents can negotiate and pay in one round trip.
+- **Encrypted messages**, so only the receiver can read them.
+- **An allowlist or free tier** for followers, contacts and people you've already replied to.
+- **An agent SDK with an HTTP 402 flow**, built on today's quote API, so an agent can ask the price and pay in one round trip.
 - **Cross-chain funding** with Circle's Bridge Kit (CCTP), so senders can pay from any chain.
-- **Notifications:** email and Telegram when a stamped message arrives.
+- **Notifications** by email, Telegram and push when a stamped message arrives.
 
 ## Project structure
 
 ```
 stamp/
-├── contracts/          Foundry: src/StampBox.sol, test/, script/, deployments/
-├── web/                Next.js 16 app (App Router, Tailwind 4, shadcn/ui, wagmi + viem, Privy, Drizzle)
-├── .github/workflows/  CI: forge fmt/test/coverage/snapshot + web lint/typecheck/build
-└── README.md
+├── contracts/            Foundry project
+│   ├── src/              StampBox.sol
+│   ├── test/             unit, fuzz, invariant, reentrancy and payout tests
+│   ├── script/           deploy script
+│   ├── scripts/          ABI export and deployment recording
+│   └── deployments/      deployed addresses per network
+├── web/                  Next.js 16 app (App Router, Tailwind 4, shadcn/ui, wagmi + viem, Privy, Drizzle)
+│   ├── src/app/          pages and API routes
+│   ├── src/components/   UI, grouped by feature
+│   ├── src/lib/          shared logic; server-only code lives in lib/server
+│   └── drizzle/          database migrations
+├── scripts/launch.mjs    one-command launch helper (pnpm launch …)
+├── docs/DEPLOYMENT.md    step-by-step deploy guide
+└── .github/              CI, security scans and Dependabot
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to get involved. MIT licensed.
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first, and report security problems privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE)

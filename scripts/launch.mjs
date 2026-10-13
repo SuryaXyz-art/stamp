@@ -90,6 +90,7 @@ function deployment(network) {
   return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : null;
 }
 
+/** One JSON-RPC call; throws on an RPC error. */
 async function rpc(url, method, params) {
   const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
   const body = await res.json();
@@ -97,6 +98,7 @@ async function rpc(url, method, params) {
   return body.result;
 }
 
+/** Address for DEPLOYER_PRIVATE_KEY, or null when it isn't set. The key itself never leaves this process except to forge. */
 function deployerAddress() {
   const key = val("DEPLOYER_PRIVATE_KEY");
   if (!key) return null;
@@ -113,6 +115,7 @@ const MIN_DEPLOY_BALANCE = 2n * 10n ** 17n; // $0.20
 
 const usdc = (weiHex) => (Number(BigInt(weiHex)) / 1e18).toFixed(4);
 
+/** Calls Circle's API with CIRCLE_API_KEY and returns the status plus parsed body (or the raw text as `message`). */
 async function circle(method, path, body) {
   const res = await fetch(`https://api.circle.com${path}`, {
     method,
@@ -143,6 +146,7 @@ function originUrl() {
 
 // ───────────────────────────── commands ─────────────────────────────
 
+/** Read-only status report: which keys are set, deployer balance, deployments, Circle key, git remote. */
 async function check() {
   console.log("\nStamp launch check\n");
   if (!existsSync(join(root, ".env"))) console.log(c.warn("! No .env yet. Copy .env.example to .env and fill it in.\n"));
@@ -201,6 +205,7 @@ async function check() {
   console.log("");
 }
 
+/** Deploys StampBox to Arc mainnet with forge, records the address for the web app, then verifies the source. */
 async function deploy() {
   const force = process.argv.includes("--force");
   if (deployment("mainnet") && !force) fail(`StampBox is already deployed on mainnet (${deployment("mainnet").address}). Pass --force to deploy a new one.`);
@@ -235,6 +240,7 @@ async function deploy() {
   console.log("  The web app now opens on mainnet by default. Commit contracts/deployments/arc-mainnet.json and web/src/generated.");
 }
 
+/** Imports StampBox into Circle Contracts, adds event monitors and subscribes the site's webhook. Safe to re-run. */
 async function registerCircle() {
   const network = process.argv.includes("--testnet") ? "testnet" : "mainnet";
   const net = NETWORKS[network];
@@ -277,6 +283,7 @@ async function registerCircle() {
   else console.log(c.warn(`! Webhook registration failed (${sub.status}): ${sub.json.message ?? ""}. Make sure the site is deployed with CIRCLE_API_KEY set, then re-run.`));
 }
 
+/** Copies the web keys from the root .env into web/.env.local (dev) and web/.env.vercel (production). */
 function writeEnvFiles() {
   const localFile = join(web, ".env.local");
   const local = parseEnv(localFile);
@@ -302,6 +309,7 @@ function writeEnvFiles() {
   if (!prod.NEXT_PUBLIC_SITE_URL) console.log(c.warn("! NEXT_PUBLIC_SITE_URL is empty: share links and badges will point at the default domain."));
 }
 
+/** Creates the public GitHub repo if needed and pushes HEAD to main, after checking the history for leaked secrets. */
 async function publish() {
   const token = val("GITHUB_TOKEN");
   const repo = val("GITHUB_REPO") || "stamp";
@@ -349,6 +357,7 @@ async function publish() {
   console.log(`\nNext: vercel.com/new → import ${login}/${repo} → Root Directory: web → Environment Variables: paste web/.env.vercel → Deploy.`);
 }
 
+/** Applies the Drizzle migrations in web/drizzle to the Neon database in DATABASE_URL. */
 function migrate() {
   const url = val("DATABASE_URL");
   if (!/^postgres(ql)?:\/\//.test(url)) fail("Put your Neon postgres:// connection string in DATABASE_URL first. (Local pglite databases migrate themselves.)");

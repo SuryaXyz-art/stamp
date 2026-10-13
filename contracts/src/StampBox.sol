@@ -194,19 +194,23 @@ contract StampBox is ReentrancyGuard {
 
     // ────────────────────────────────── Views ─────────────────────────────────
 
+    /// @notice Full settlement state of one stamp. Reverts with `InvalidId` for ids that don't exist yet.
     function getStamp(uint256 id) external view returns (Stamp memory) {
         if (id >= stamps.length) revert InvalidId();
         return stamps[id];
     }
 
+    /// @notice Number of stamps ever sent. Ids run from 0 to `stampsCount() - 1`.
     function stampsCount() external view returns (uint256) {
         return stamps.length;
     }
 
+    /// @notice Number of stamps `user` has received, for paginating `inboxOf`.
     function inboxCount(address user) external view returns (uint256) {
         return _inbox[user].length;
     }
 
+    /// @notice Number of stamps `user` has sent, for paginating `outboxOf`.
     function outboxCount(address user) external view returns (uint256) {
         return _outbox[user].length;
     }
@@ -223,6 +227,7 @@ contract StampBox is ReentrancyGuard {
 
     // ──────────────────────────────── Internals ───────────────────────────────
 
+    /// @dev Loads a stamp that can still be settled, or reverts if it doesn't exist or is already final.
     function _pending(uint256 id) internal view returns (Stamp storage s) {
         if (id >= stamps.length) revert InvalidId();
         s = stamps[id];
@@ -245,6 +250,7 @@ contract StampBox is ReentrancyGuard {
         _pay(msg.sender, _markKept(id));
     }
 
+    /// @dev Marks a stamp as kept and returns its amount; the caller pays out (once per batch in `batchKeep`).
     function _markKept(uint256 id) internal returns (uint256 amount) {
         Stamp storage s = _pending(id);
         if (s.to != msg.sender) revert NotReceiver();
@@ -255,6 +261,7 @@ contract StampBox is ReentrancyGuard {
         emit Settled(id, msg.sender, Status.Kept, "");
     }
 
+    /// @dev Clears the caller's `owed` balance before paying it to `to` (checks-effects-interactions).
     function _withdraw(address to) internal {
         uint256 amount = owed[msg.sender];
         if (amount == 0) revert NothingOwed();
@@ -289,6 +296,7 @@ contract StampBox is ReentrancyGuard {
         if (!ok) revert TransferFailed();
     }
 
+    /// @dev Copies `arr[offset : offset + limit]` to memory, clamped to the array length.
     function _slice(uint256[] storage arr, uint256 offset, uint256 limit) internal view returns (uint256[] memory out) {
         uint256 len = arr.length;
         if (offset >= len) return new uint256[](0);

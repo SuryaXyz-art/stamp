@@ -14,3 +14,14 @@ node_modules/
 .next/
 .vercel/
 contracts/broadcast/**/*.lock
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# local tool notes
+AGENTS.md
+CLAUDE.md
+.claude/
