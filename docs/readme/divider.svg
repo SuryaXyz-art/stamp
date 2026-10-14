@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 28" width="1280" height="28" role="presentation">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1280" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF2BD6" stop-opacity="0"/>
+      <stop offset=".25" stop-color="#FF2BD6"/>
+      <stop offset=".5" stop-color="#8B5CFF"/>
+      <stop offset=".75" stop-color="#00F0FF"/>
+      <stop offset="1" stop-color="#00F0FF" stop-opacity="0"/>
+    </linearGradient>
+    <symbol id="env" viewBox="-14 -10 28 20">
+      <rect x="-12" y="-8" width="24" height="16" rx="2.5" fill="#0A0714" stroke="#00F0FF" stroke-width="2"/>
+      <path d="M -11 -6 L 0 2 L 11 -6" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linejoin="round"/>
+    </symbol>
+    <style>
+      .m { stroke-dasharray: 2 10; animation: m 1.6s linear infinite; }
+      @keyframes m { to { stroke-dashoffset: -24 } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important } }
+    </style>
+  </defs>
+  <line x1="0" y1="14" x2="1280" y2="14" stroke="url(#g)" stroke-width="3" stroke-linecap="round" class="m"/>
+  <use href="#env" width="24" height="18" y="5">
+    <animate attributeName="x" values="-30;1290" dur="7s" repeatCount="indefinite"/>
+  </use>
+</svg>
