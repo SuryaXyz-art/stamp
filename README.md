@@ -11,7 +11,12 @@ Strangers attach a small USDC stamp to message you. Reply and they get it back. 
 ![Contract coverage](https://img.shields.io/badge/contract%20coverage-100%25-1C7C45)
 ![Built on Arc](https://img.shields.io/badge/built%20on-Arc-2775CA)
 
-[StampBox on Arc Testnet](https://explorer.testnet.arc.io/address/0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B) · [Deploy guide](docs/DEPLOYMENT.md) · [Security](SECURITY.md)
+**[Live app](https://stamp-topaz.vercel.app)** · [Send me a stamp](https://stamp-topaz.vercel.app/0x98025B790E3f9F0932D098ADeFA5D9478104CCD2) · [Deploy guide](docs/DEPLOYMENT.md) · [Security](SECURITY.md)
+
+| Network | StampBox | Start block |
+|---|---|---|
+| Arc mainnet (`5042`) | [`0x654Ac560d556300830CD7B4e0769aC33826556D4`](https://explorer.arc.io/address/0x654Ac560d556300830CD7B4e0769aC33826556D4) | 25809377 |
+| Arc testnet (`5042002`) | [`0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B`](https://explorer.testnet.arc.io/address/0x448C8cAB90a6aaCa0692cEBCDDCD06D3cA15d24B) | 65630121 |
 
 </div>
 
@@ -70,7 +75,7 @@ Stamp only makes sense because of how Arc works:
 Stamp also gives automated outreach a fair way to reach people: an agent puts down a refundable deposit instead of spamming for free. There's no API key, and the server never signs or holds anything.
 
 ```bash
-curl "https://<your-site>/api/v1/stamp?to=@alice&message=Hi%20Alice"
+curl "https://stamp-topaz.vercel.app/api/v1/stamp?to=0x98025B790E3f9F0932D098ADeFA5D9478104CCD2&message=Hi%20there"
 ```
 
 The response includes the recipient, their live price, the rules, and a ready-to-sign transaction (`{ chainId, to, value, data }`) that any wallet or agent can send.

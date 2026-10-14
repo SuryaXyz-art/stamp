@@ -3,6 +3,7 @@
 import {
   getIdentityToken,
   PrivyProvider,
+  useCreateWallet,
   useExportWallet,
   useLinkAccount,
   useLogin,
@@ -24,7 +25,8 @@ import { getNetworkConfig, PRIVY_APP_ID } from "@/lib/config";
 import { rememberSignedIn, useAuthShell, type AuthApi } from "./auth-context";
 
 /**
- * Privy: X, Discord, Google, email OTP, passkeys and external wallets; social/email users get an embedded wallet.
+ * Privy: whichever of X, Discord, Google, email OTP, passkeys and external wallets the dashboard enables;
+ * social/email users get an embedded wallet.
  * Arc is a custom chain (https://docs.privy.io/basics/react/advanced/configuring-evm-networks).
  * Wagmi goes through @privy-io/wagmi so both stay in sync (https://docs.privy.io/wallets/connectors/ethereum/integrations/wagmi).
  */
@@ -39,7 +41,8 @@ const wagmiConfig = createConfig({
 
 function privyConfig(theme: "light" | "dark", defaultChainId: number): PrivyClientConfig {
   return {
-    loginMethods: ["twitter", "discord", "google", "email", "passkey", "wallet"],
+    // No `loginMethods`: the modal shows exactly what's enabled in the Privy dashboard (X, Discord, Google, email,
+    // passkey, wallet). Listing one here that the dashboard has off renders a button that fails with "not allowed".
     appearance: {
       // Hex = the modal's background colour; mirrors --card in globals.css.
       theme: theme === "dark" ? "#0E0C16" : "#FFFFFF",
@@ -103,6 +106,19 @@ function Bridge({ children }: { children: ReactNode }) {
       toast.error("Couldn't finish signing in", { description: (err as Error).message });
     });
   }, [ready, authenticated, user, features?.accounts, syncSession]);
+
+  // Safety net: an email/social user who ends up without a wallet (auto-create off in the Privy dashboard, or it
+  // failed) could never open an inbox or finish signing in. Give auto-create a moment, then create one ourselves.
+  const { createWallet } = useCreateWallet();
+  const walletAttempted = useRef<string | null>(null);
+  useEffect(() => {
+    if (!ready || !authenticated || !user || user.wallet || walletAttempted.current === user.id) return;
+    const t = setTimeout(() => {
+      walletAttempted.current = user.id;
+      createWallet().catch((err) => toast.error("Couldn't create your wallet", { description: (err as Error).message }));
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [ready, authenticated, user, createWallet]);
 
   useEffect(() => {
     if (ready) rememberSignedIn(authenticated);
