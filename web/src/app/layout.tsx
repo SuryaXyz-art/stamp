@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Chakra_Petch, Inter, JetBrains_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { NeonBackdrop } from "@/components/layout/neon-backdrop";
 import { NetworkBanner } from "@/components/layout/network-banner";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -40,7 +41,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="neon-backdrop flex min-h-dvh flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
+      <body className="relative isolate flex min-h-dvh flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0">
+        <NeonBackdrop />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2 focus:font-medium focus:shadow-lg"

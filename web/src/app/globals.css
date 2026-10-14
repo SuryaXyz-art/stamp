@@ -95,8 +95,12 @@
   --violet-ink: #5f2fe0;
   --amber-ink: #8a5300;
 
-  --grid-line: rgb(18 14 31 / 0.045);
-  --scanline: rgb(18 14 31 / 0.018);
+  --bd-aurora: 0.55;
+  --bd-ink: 0.32;
+  --bd-sky-top: #e9e1ff;
+  --bd-sky-mid: #f6f4ff;
+  --bd-sky-glow: #ffd9f6;
+  --bd-stars: 0;
   --foil: linear-gradient(110deg, #c2109f 0%, #6a35f0 30%, #00879a 55%, #4f8a00 75%, #c2109f 100%);
   --edge: linear-gradient(135deg, color-mix(in srgb, var(--magenta) 55%, transparent), color-mix(in srgb, var(--violet) 35%, transparent) 45%, color-mix(in srgb, var(--cyan) 55%, transparent));
   --glow-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 28%, transparent);
@@ -128,8 +132,12 @@
   --violet-ink: #a78bff;
   --amber-ink: #ffb800;
 
-  --grid-line: rgb(139 92 255 / 0.07);
-  --scanline: rgb(255 255 255 / 0.018);
+  --bd-aurora: 1;
+  --bd-ink: 0.42;
+  --bd-sky-top: #160b34;
+  --bd-sky-mid: #0a0716;
+  --bd-sky-glow: #3a0b45;
+  --bd-stars: 1;
   --foil: linear-gradient(110deg, #ff2bd6 0%, #a78bff 28%, #00f0ff 52%, #c6ff00 74%, #ff2bd6 100%);
   --edge: linear-gradient(135deg, color-mix(in srgb, var(--magenta) 70%, transparent), color-mix(in srgb, var(--violet) 30%, transparent) 45%, color-mix(in srgb, var(--cyan) 65%, transparent));
   --glow-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent), 0 0 18px color-mix(in srgb, var(--ring) 45%, transparent);
@@ -207,30 +215,227 @@
 }
 
 @layer components {
-  /* Page backdrop: a faint blueprint grid plus CRT scanlines, fixed behind everything. */
+  /* ── Animated backdrop (components/layout/neon-backdrop.tsx), fixed behind every page ──
+     Drifting neon aurora, postage stamps floating up, two turning postmarks. Only transform and opacity
+     animate, so it stays on the compositor. --bd-aurora / --bd-ink tone it down in the light theme. */
   .neon-backdrop {
-    position: relative;
-    isolation: isolate;
-  }
-  .neon-backdrop::before,
-  .neon-backdrop::after {
-    content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
+    overflow: hidden;
     pointer-events: none;
+    contain: strict;
   }
-  .neon-backdrop::before {
-    background-image:
-      radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--violet) 14%, transparent), transparent 70%),
-      radial-gradient(50rem 26rem at -10% 10%, color-mix(in srgb, var(--magenta) 9%, transparent), transparent 70%),
-      linear-gradient(var(--grid-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: auto, auto, 32px 32px, 32px 32px;
-    mask-image: linear-gradient(to bottom, black, black 60%, transparent);
+
+  /* Deep indigo sky that sinks into the page colour, with a magenta horizon glow low on the right. */
+  .bd-sky {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(90vmax 50vmax at 100% 100%, color-mix(in srgb, var(--bd-sky-glow) 70%, transparent), transparent 70%),
+      radial-gradient(80vmax 60vmax at 50% -20%, var(--bd-sky-top), transparent 70%),
+      linear-gradient(180deg, var(--bd-sky-mid), var(--background) 80%);
   }
-  .neon-backdrop::after {
-    background-image: repeating-linear-gradient(to bottom, var(--scanline) 0 1px, transparent 1px 3px);
+
+  /* A slow neon light sweep: a conic ribbon turning behind everything, faded toward its edges. */
+  .bd-sweep {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 160vmax;
+    height: 160vmax;
+    margin: -80vmax 0 0 -80vmax;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      color-mix(in srgb, var(--magenta) 9%, transparent) 40deg,
+      transparent 90deg,
+      color-mix(in srgb, var(--cyan) 7%, transparent) 160deg,
+      transparent 210deg,
+      color-mix(in srgb, var(--violet) 9%, transparent) 280deg,
+      transparent 330deg
+    );
+    -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    mask: radial-gradient(closest-side, #000 20%, transparent 75%);
+    opacity: var(--bd-aurora);
+    animation: sweep-turn 80s linear infinite;
+    will-change: transform;
+  }
+
+  /* Two star layers (box-shadows on a 2px dot), twinkling out of step. Dark theme only. */
+  .bd-stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    opacity: var(--bd-stars);
+  }
+  .bd-stars-near {
+    animation: twinkle 5s ease-in-out infinite alternate;
+  }
+  .bd-stars-far {
+    width: 1px;
+    height: 1px;
+    animation: twinkle 8s ease-in-out -3s infinite alternate;
+  }
+
+  /* Delivery routes: dashed paths that march slowly, each with a glowing envelope flying along it. */
+  .bd-routes {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .bd-route {
+    color: var(--tone);
+  }
+  .bd-route-path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-dasharray: 2 12;
+    stroke-linecap: round;
+    opacity: calc(var(--bd-ink) * 0.7);
+    animation: route-march 3s linear infinite;
+  }
+  .bd-envelope {
+    opacity: calc(var(--bd-ink) * 1.6);
+  }
+  .bd-envelope-body {
+    fill: color-mix(in srgb, currentColor 18%, var(--background));
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
+  .bd-envelope-flap {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  /* USDC coins drifting up and fading: refunds on their way home. */
+  .bd-coin {
+    position: absolute;
+    top: 0;
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in srgb, var(--cyan) 80%, transparent);
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--cyan) 35%, transparent), color-mix(in srgb, var(--cyan) 8%, transparent));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--cyan) 45%, transparent);
+    color: var(--cyan);
+    font-family: var(--font-display);
+    font-size: calc(var(--size) * 0.6);
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0;
+    transform: translate3d(0, 105vh, 0);
+    animation: coin-rise var(--dur) ease-in var(--delay) infinite;
+    will-change: transform, opacity;
+  }
+
+  .bd-aurora {
+    position: absolute;
+    width: 70vmax;
+    height: 70vmax;
+    border-radius: 50%;
+    opacity: var(--bd-aurora);
+    will-change: transform;
+  }
+  .bd-aurora-a {
+    top: -35vmax;
+    right: -20vmax;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--violet) 22%, transparent), transparent);
+    animation: aurora-a 26s ease-in-out infinite alternate;
+  }
+  .bd-aurora-b {
+    top: -10vmax;
+    left: -30vmax;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--magenta) 15%, transparent), transparent);
+    animation: aurora-b 34s ease-in-out infinite alternate;
+  }
+  .bd-aurora-c {
+    bottom: -40vmax;
+    left: 20vw;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--cyan) 11%, transparent), transparent);
+    animation: aurora-c 40s ease-in-out infinite alternate;
+  }
+
+  /* A stamp: tinted paper, perforated on all four sides, a dashed inner frame and its value. */
+  .bd-stamp {
+    --perf-r: 3px;
+    --perf-gap: 9px;
+    position: absolute;
+    top: 0;
+    left: var(--x);
+    width: var(--w);
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    opacity: var(--bd-ink);
+    -webkit-mask:
+      radial-gradient(circle var(--perf-r) at 50% 0, #0000 97%, #000) top / var(--perf-gap) 100% repeat-x,
+      radial-gradient(circle var(--perf-r) at 50% 100%, #0000 97%, #000) bottom / var(--perf-gap) 100% repeat-x,
+      radial-gradient(circle var(--perf-r) at 0 50%, #0000 97%, #000) left / 100% var(--perf-gap) repeat-y,
+      radial-gradient(circle var(--perf-r) at 100% 50%, #0000 97%, #000) right / 100% var(--perf-gap) repeat-y;
+    -webkit-mask-composite: source-in;
+    mask:
+      radial-gradient(circle var(--perf-r) at 50% 0, #0000 97%, #000) top / var(--perf-gap) 100% repeat-x,
+      radial-gradient(circle var(--perf-r) at 50% 100%, #0000 97%, #000) bottom / var(--perf-gap) 100% repeat-x,
+      radial-gradient(circle var(--perf-r) at 0 50%, #0000 97%, #000) left / 100% var(--perf-gap) repeat-y,
+      radial-gradient(circle var(--perf-r) at 100% 50%, #0000 97%, #000) right / 100% var(--perf-gap) repeat-y;
+    mask-composite: intersect;
+    transform: translate3d(0, 110vh, 0) rotate(var(--r0));
+    animation: stamp-rise var(--dur) linear var(--delay) infinite;
+    will-change: transform;
+  }
+  .bd-stamp-label {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border: 1px dashed color-mix(in srgb, var(--tone) 70%, transparent);
+    border-radius: 1px;
+    color: var(--tone);
+    font-family: var(--font-display);
+    font-size: calc(var(--w) * 0.2);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .bd-postmark {
+    position: absolute;
+    left: var(--pm-x);
+    top: var(--pm-y);
+    width: var(--pm-size);
+    height: var(--pm-size);
+    color: var(--tone);
+    stroke: currentColor;
+    fill: currentColor;
+    opacity: calc(var(--bd-ink) * 0.45);
+    font-family: var(--font-mono);
+    animation: postmark-spin var(--pm-dur) linear infinite;
+    will-change: transform;
+  }
+  .bd-postmark text {
+    stroke: none;
+  }
+
+  /* Fades the scene out toward the bottom so long pages stay calm and text stays crisp. */
+  .bd-vignette {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 0%, transparent 55%, color-mix(in srgb, var(--background) 70%, transparent) 100%);
   }
 
   /* Holographic foil text for stamp values. Decorative only (callers pair it with readable text). */
@@ -352,6 +557,77 @@
   }
 }
 
+@keyframes aurora-a {
+  to {
+    transform: translate3d(-18vw, 14vh, 0) scale(1.15);
+  }
+}
+@keyframes aurora-b {
+  to {
+    transform: translate3d(22vw, 18vh, 0) scale(0.9);
+  }
+}
+@keyframes aurora-c {
+  to {
+    transform: translate3d(-16vw, -22vh, 0) scale(1.2);
+  }
+}
+
+/* Up from below the fold to above the top, drifting sideways and turning a little. */
+@keyframes stamp-rise {
+  from {
+    transform: translate3d(0, 110vh, 0) rotate(var(--r0));
+  }
+  to {
+    transform: translate3d(var(--dx), -20vh, 0) rotate(var(--r1));
+  }
+}
+
+@keyframes sweep-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes twinkle {
+  from {
+    opacity: calc(var(--bd-stars) * 0.25);
+  }
+  to {
+    opacity: calc(var(--bd-stars) * 0.85);
+  }
+}
+
+@keyframes route-march {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* Coins fade in low, glow on the way up and are gone before they reach the header. */
+@keyframes coin-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 105vh, 0) scale(0.8);
+  }
+  15% {
+    opacity: calc(var(--bd-ink) * 1.5);
+  }
+  70% {
+    opacity: calc(var(--bd-ink) * 1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), 15vh, 0) scale(1.1);
+  }
+}
+
+@keyframes postmark-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Hidden frames use a zero-height clip, not opacity: a layer fading in from opacity 0 would be reported as a
    new, later Largest Contentful Paint for the headline. Clipped slices are always smaller than the real text. */
 @keyframes glitch-a {
@@ -409,5 +685,24 @@
   }
   .foil {
     animation: none;
+  }
+  /* The backdrop holds still: stamps rest where they are spread across the page. */
+  .neon-backdrop *,
+  .neon-backdrop {
+    animation: none !important;
+  }
+  .bd-stamp {
+    transform: translate3d(0, var(--rest), 0) rotate(var(--r0));
+  }
+  .bd-coin {
+    opacity: var(--bd-ink);
+    transform: translate3d(0, var(--rest), 0);
+  }
+  .bd-stars {
+    opacity: calc(var(--bd-stars) * 0.6);
+  }
+  /* SVG animateMotion ignores CSS animation rules, so the flying envelopes are hidden instead. */
+  .bd-envelope {
+    display: none;
   }
 }
