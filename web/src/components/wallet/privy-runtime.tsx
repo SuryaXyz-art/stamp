@@ -21,7 +21,7 @@ import { useTheme } from "@/components/providers/theme-provider";
 import { useFeatures } from "@/hooks/use-profile";
 import { api, type PrivateProfile } from "@/lib/api-client";
 import { arcMainnet, arcTestnet } from "@/lib/chains";
-import { getNetworkConfig, PRIVY_APP_ID } from "@/lib/config";
+import { getNetworkConfig, PRIVY_APP_ID, SITE_URL, WALLETCONNECT_PROJECT_ID } from "@/lib/config";
 import { rememberSignedIn, useAuthShell, type AuthApi } from "./auth-context";
 
 /**
@@ -54,6 +54,10 @@ function privyConfig(theme: "light" | "dark", defaultChainId: number): PrivyClie
       walletList: ["detected_ethereum_wallets", "metamask", "coinbase_wallet", "okx_wallet", "rainbow", "wallet_connect"],
     },
     embeddedWallets: { ethereum: { createOnLogin: "users-without-wallets" }, showWalletUIs: true },
+    // Our own WalletConnect project (with this domain verified in the Reown dashboard) lets mobile wallets show the
+    // site as verified instead of "unknown domain". Without one, Privy falls back to its shared project.
+    walletConnectCloudProjectId: WALLETCONNECT_PROJECT_ID || undefined,
+    legal: { privacyPolicyUrl: `${SITE_URL}/privacy` },
     defaultChain: defaultChainId === arcMainnet.id ? arcMainnet : arcTestnet,
     supportedChains: [arcTestnet, arcMainnet],
   };
