@@ -12,6 +12,15 @@ const MAX_BODY = 64 * 1024;
  * Server-to-server, so this skips the same-origin/CSRF wrapper; the ECDSA signature is the authentication instead.
  * Always 2xx for things we deliberately ignore, so Circle doesn't retry them.
  */
+
+/** Reachability check: webhook providers probe the URL (HEAD or GET) before saving a subscription. */
+export function HEAD() {
+  return new Response(null, { status: 200 });
+}
+export function GET() {
+  return json({ ok: true });
+}
+
 export async function POST(req: NextRequest) {
   const raw = await req.text();
   if (raw.length > MAX_BODY) return json({ error: "Payload too large." }, 413);
