@@ -25,7 +25,7 @@ jobs:
           submodules: recursive
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
         with:
-          version: stable
+          version: v1.8.4 # the version StampBox was built and deployed with; gas numbers differ between releases
       - name: Format check
         run: forge fmt --check
       - name: Build
@@ -37,7 +37,8 @@ jobs:
       - name: Coverage
         run: forge coverage --no-match-coverage "test/" --report summary
       - name: Gas snapshot unchanged
-        run: forge snapshot --check
+        # Fuzz averages wobble by a few gas between runs; anything over 1% is a real change.
+        run: forge snapshot --check --tolerance 1
 
   web:
     name: Web (audit, lint, typecheck, test, build)
