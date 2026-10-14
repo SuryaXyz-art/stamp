@@ -25,9 +25,11 @@ function read() {
   const e = schema.parse(process.env);
   const empty = (v?: string) => (v ? v : undefined);
   const sessionSecret = e.SESSION_SECRET && e.SESSION_SECRET.length >= 32 ? e.SESSION_SECRET : undefined;
+  // A PEM truncated to its BEGIN line (pasted over several lines in a .env) would fail every sign-in; treat it as unset.
+  const pem = empty(e.PRIVY_VERIFICATION_KEY)?.replace(/\\n/g, "\n");
   return {
     privyAppId: empty(e.NEXT_PUBLIC_PRIVY_APP_ID),
-    privyVerificationKey: empty(e.PRIVY_VERIFICATION_KEY)?.replace(/\\n/g, "\n"),
+    privyVerificationKey: pem?.includes("-----END ") ? pem : undefined,
     privyAppSecret: empty(e.PRIVY_APP_SECRET),
     sessionSecret,
     databaseUrl: empty(e.DATABASE_URL),

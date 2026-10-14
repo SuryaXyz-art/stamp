@@ -64,11 +64,18 @@ function parseEnv(file) {
     let v = m[2].trim();
     if (v.startsWith('"')) v = v.slice(1, -1).replace(/\\"/g, '"');
     else if (v.startsWith("'")) v = v.slice(1, -1);
-    else v = v.replace(/\s+#.*$/, "").trim();
+    else if (/^-----BEGIN [A-Z ]+-----$/.test(v)) {
+      // A PEM pasted unquoted over several lines: take the lines up to its END marker.
+      const rest = text.slice(m.index + m[0].length).match(/^\n([A-Za-z0-9+/=\n]*?)\n?(-----END [A-Z ]+-----)/);
+      if (rest) v = `${v}\n${rest[1].replace(/\n/g, "")}\n${rest[2]}`;
+    } else v = v.replace(/\s+#.*$/, "").trim();
     out[m[1]] = v;
   }
   return out;
 }
+
+/** True when the value looks like a complete PEM public key (`\n` escapes accepted). */
+const isPem = (v) => /^-----BEGIN PUBLIC KEY-----\s*[A-Za-z0-9+/=\s]{40,}-----END PUBLIC KEY-----$/.test(v.replace(/\\n/g, "\n").trim());
 
 function serializeEnv(obj, header) {
   const lines = [header, ""];
@@ -164,6 +171,8 @@ async function check() {
     ["UPSTASH_REDIS_REST_URL", "rate limits"],
   ];
   for (const [k, why] of rows) console.log(`  ${val(k) ? c.ok("✓") : c.dim("·")} ${k.padEnd(28)} ${c.dim(why)}`);
+  if (val("PRIVY_VERIFICATION_KEY") && !isPem(val("PRIVY_VERIFICATION_KEY")))
+    console.log(c.bad("\n  ✗ PRIVY_VERIFICATION_KEY isn't a complete PEM. Put it on one line in double quotes, with \\n between the BEGIN line, the key and the END line."));
 
   console.log("");
   const addr = deployerAddress();
@@ -285,6 +294,8 @@ async function registerCircle() {
 
 /** Copies the web keys from the root .env into web/.env.local (dev) and web/.env.vercel (production). */
 function writeEnvFiles() {
+  if (val("PRIVY_VERIFICATION_KEY") && !isPem(val("PRIVY_VERIFICATION_KEY")))
+    fail("PRIVY_VERIFICATION_KEY in .env isn't a complete PEM (sign-in would fail for everyone). Run `pnpm launch check` for how to fix it.");
   const localFile = join(web, ".env.local");
   const local = parseEnv(localFile);
   const merged = { ...local };
