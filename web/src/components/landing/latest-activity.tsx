@@ -17,7 +17,10 @@ function describe(a: Activity): string {
   return `unanswered, ${amount} reclaimed`;
 }
 
-/** Live feed from Circle's Contracts event monitors (signed webhooks → /api/activity). Hidden until there's data. */
+/**
+ * Live feed from Circle's Contracts event monitors (signed webhooks → /api/activity), or read straight from the
+ * contract until Circle has delivered anything. Hidden until there's data.
+ */
 export function LatestActivity() {
   const { key } = useNetwork();
   const { data } = useQuery({
@@ -26,16 +29,16 @@ export function LatestActivity() {
     retry: false,
     queryFn: async () => {
       const res = await fetch(`/api/activity?network=${key}`);
-      if (!res.ok) return [];
-      return ((await res.json()) as { events: Activity[] }).events;
+      if (!res.ok) return { events: [] as Activity[], source: "contract" };
+      return (await res.json()) as { events: Activity[]; source: "circle" | "contract" };
     },
   });
-  if (!data?.length) return null;
+  if (!data?.events.length) return null;
   return (
     <div className="panel mt-4 px-6 py-5">
       <p className="kicker text-muted-foreground">Latest on Arc</p>
       <ul className="mt-3 divide-y divide-border">
-        {data.map((a) => (
+        {data.events.map((a) => (
           <li key={`${a.stampId}-${a.kind}`} className="flex items-center justify-between gap-4 py-2.5 text-sm">
             <span className="min-w-0 truncate">
               <Link href={`/stamp/${a.stampId}`} className="font-mono text-foreground underline-offset-4 hover:underline">
@@ -47,7 +50,9 @@ export function LatestActivity() {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-muted-foreground">Delivered by Circle Contracts event monitors.</p>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {data.source === "circle" ? "Delivered by Circle Contracts event monitors." : "Read live from the StampBox contract on Arc."}
+      </p>
     </div>
   );
 }
