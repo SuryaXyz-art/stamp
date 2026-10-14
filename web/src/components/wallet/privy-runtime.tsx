@@ -49,9 +49,13 @@ function privyConfig(theme: "light" | "dark", defaultChainId: number): PrivyClie
       accentColor: theme === "dark" ? "#FF2BD6" : "#C2109F",
       logo: "/icon.svg",
       landingHeader: "Sign in to Stamp",
-      loginMessage: "Your attention has a price. Set it.",
+      // What new users actually worry about at this step. Both are true: signing in sends no transaction, and every
+      // transaction needs an explicit approval in the wallet.
+      loginMessage: "Signing in is free. Nothing moves without your approval.",
       walletChainType: "ethereum-only",
-      walletList: ["detected_ethereum_wallets", "metamask", "coinbase_wallet", "okx_wallet", "rainbow", "wallet_connect"],
+      // Installed wallets first, then a short list of well-known ones and a single WalletConnect QR for any mobile
+      // wallet. ("wallet_connect" would list WalletConnect's whole registry: 600+ unfamiliar names.)
+      walletList: ["detected_ethereum_wallets", "metamask", "coinbase_wallet", "rainbow", "okx_wallet", "wallet_connect_qr"],
     },
     embeddedWallets: { ethereum: { createOnLogin: "users-without-wallets" }, showWalletUIs: true },
     // Our own WalletConnect project (with this domain verified in the Reown dashboard) lets mobile wallets show the
