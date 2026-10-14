@@ -20,6 +20,8 @@ allowBuilds:
 overrides:
   "ws@>=8.0.0 <8.21.0": "^8.21.0"
   "uuid@<11.1.1": "^11.1.1"
+  # drizzle-kit (dev only) still lists @esbuild-kit, whose esbuild 0.18 has GHSA-67mh-4wv8-2f99; drizzle-kit's bin never loads it.
+  "@esbuild-kit/core-utils>esbuild": "0.25.12"
 
 auditConfig:
   ignoreGhsas:
