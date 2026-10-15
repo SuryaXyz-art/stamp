@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 780" width="1280" height="780" role="img" aria-label="Stamp architecture: the web app talks straight to the StampBox contract on Arc, which holds every stamp and emits Sent and Settled events. Circle event monitors forward those events to an optional Next.js server that stores profiles and handles in Postgres. The server never holds keys, funds or message text.">
+  <title>Stamp architecture</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#110622"/><stop offset=".6" stop-color="#0A0714"/><stop offset="1" stop-color="#04141B"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF2BD6"/><stop offset=".55" stop-color="#8B5CFF"/><stop offset="1" stop-color="#00F0FF"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1A1233"/><stop offset="1" stop-color="#0B1520"/>
+    </linearGradient>
+    <filter id="blur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="8"/></filter>
+    <marker id="aP" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B26BFF"/></marker>
+    <marker id="aC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#00F0FF"/></marker>
+    <marker id="aM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#FF2BD6"/></marker>
+    <marker id="aL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#C6FF3D"/></marker>
+    <style>
+      text { font-family: "Segoe UI", "Inter", Helvetica, Arial, sans-serif; }
+      .mono { font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+      .t { font-size: 17px; font-weight: 800; fill: #F4F1FF; }
+      .s { font-size: 12.5px; fill: #9A94BF; }
+      .march { stroke-dasharray: 6 8; animation: march 1.6s linear infinite; }
+      @keyframes march { to { stroke-dashoffset: -28 } }
+      .breathe { animation: breathe 3s ease-in-out infinite; }
+      @keyframes breathe { 0%,100% { opacity: .45 } 50% { opacity: .95 } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important } }
+    </style>
+  </defs>
+
+  <rect width="1280" height="780" rx="22" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1278" height="778" rx="21" fill="none" stroke="url(#neon)" stroke-opacity=".45" stroke-width="2"/>
+
+  <!-- header -->
+  <text x="40" y="50" class="mono" font-size="13" letter-spacing="3" fill="#00F0FF">HOW STAMP IS BUILT</text>
+  <text x="40" y="86" font-size="30" font-weight="800" fill="#F4F1FF">The contract is the product.</text>
+  <g class="mono" font-size="12" letter-spacing="1">
+    <circle cx="828" cy="74" r="6" fill="#B26BFF"/><text x="840" y="78" fill="#C9B8FF">BROWSER</text>
+    <circle cx="930" cy="74" r="6" fill="#00F0FF"/><text x="942" y="78" fill="#9FF7FF">ON-CHAIN</text>
+    <circle cx="1034" cy="74" r="6" fill="#FF2BD6"/><text x="1046" y="78" fill="#FF9BEA">OPTIONAL</text>
+    <circle cx="1138" cy="74" r="6" fill="#C6FF3D"/><text x="1150" y="78" fill="#E2FF9E">CIRCLE</text>
+  </g>
+
+  <!-- ① web app panel -->
+  <rect x="32" y="120" width="320" height="552" rx="18" fill="#B26BFF" fill-opacity=".05" stroke="#B26BFF" stroke-opacity=".55" stroke-width="1.5"/>
+  <text x="52" y="152" class="mono" font-size="13" font-weight="700" letter-spacing="2.5" fill="#B26BFF">① WEB APP</text>
+  <text x="52" y="172" class="s">Next.js · wagmi · viem</text>
+  <g>
+    <rect x="52" y="190" width="280" height="72" rx="12" fill="#0E0C16" stroke="#B26BFF" stroke-width="1.5"/>
+    <text x="72" y="220" class="t">✉️  Send page</text>
+    <text x="72" y="244" class="mono" font-size="12" fill="#C9B8FF">/@handle · /[address]</text>
+
+    <rect x="52" y="278" width="280" height="72" rx="12" fill="#0E0C16" stroke="#B26BFF" stroke-width="1.5"/>
+    <text x="72" y="308" class="t">📥  Inbox</text>
+    <text x="72" y="332" class="mono" font-size="12" fill="#C9B8FF">/inbox · receiver</text>
+
+    <rect x="52" y="366" width="280" height="72" rx="12" fill="#0E0C16" stroke="#B26BFF" stroke-width="1.5"/>
+    <text x="72" y="396" class="t">📤  Sent</text>
+    <text x="72" y="420" class="mono" font-size="12" fill="#C9B8FF">/sent · sender</text>
+
+    <rect x="52" y="454" width="280" height="72" rx="12" fill="#0E0C16" stroke="#B26BFF" stroke-width="1.5"/>
+    <text x="72" y="484" class="t">🧾  Receipt</text>
+    <text x="72" y="508" class="mono" font-size="12" fill="#C9B8FF">/stamp/[id] · public</text>
+
+    <rect x="52" y="572" width="280" height="72" rx="12" fill="#0E0C16" stroke="#FF2BD6" stroke-width="1.5" stroke-dasharray="5 5"/>
+    <text x="72" y="602" class="t">🔑  Privy SDK</text>
+    <text x="72" y="626" class="s">sign-in · lazy-loaded</text>
+  </g>
+
+  <!-- ② arc panel -->
+  <rect x="488" y="120" width="304" height="466" rx="18" fill="#00F0FF" fill-opacity=".05" stroke="#00F0FF" stroke-opacity=".6" stroke-width="1.5"/>
+  <text x="508" y="152" class="mono" font-size="13" font-weight="700" letter-spacing="2.5" fill="#00F0FF">② ARC L1</text>
+  <text x="508" y="172" class="s">USDC gas · sub-second finality</text>
+
+  <rect x="508" y="190" width="264" height="220" rx="16" fill="#8B5CFF" opacity=".35" filter="url(#blur)" class="breathe"/>
+  <rect x="508" y="190" width="264" height="220" rx="16" fill="url(#box)" stroke="url(#neon)" stroke-width="2.5"/>
+  <g transform="translate(640 240)">
+    <rect x="-26" y="-20" width="52" height="40" rx="5" fill="#0A0714" stroke="#00F0FF" stroke-width="2.5"/>
+    <path d="M -23 -16 L 0 3 L 23 -16" fill="none" stroke="#00F0FF" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="20" cy="14" r="11" fill="#FF2BD6"/>
+    <text x="20" y="18.5" text-anchor="middle" font-size="12" font-weight="900" fill="#0A0714">$</text>
+  </g>
+  <text x="640" y="296" text-anchor="middle" font-size="22" font-weight="800" fill="#F4F1FF">StampBox.sol</text>
+  <text x="640" y="318" text-anchor="middle" class="s">escrow + settlement</text>
+  <g class="mono" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">
+    <rect x="524" y="338" width="110" height="24" rx="12" fill="#C6FF3D" fill-opacity=".12" stroke="#C6FF3D"/>
+    <text x="579" y="354" fill="#C6FF3D">IMMUTABLE</text>
+    <rect x="644" y="338" width="112" height="24" rx="12" fill="#FF2BD6" fill-opacity=".12" stroke="#FF2BD6"/>
+    <text x="700" y="354" fill="#FF2BD6">NO ADMIN KEY</text>
+    <rect x="566" y="370" width="148" height="24" rx="12" fill="#00F0FF" fill-opacity=".12" stroke="#00F0FF"/>
+    <text x="640" y="386" fill="#00F0FF">7-DAY TIMEOUT</text>
+  </g>
+
+  <rect x="508" y="450" width="264" height="110" rx="14" fill="#0E0C16" stroke="#00F0FF" stroke-width="1.5"/>
+  <text x="528" y="482" class="t">📜  Event logs</text>
+  <text x="528" y="508" class="mono" font-size="12.5" fill="#9FF7FF">Sent · Settled</text>
+  <text x="528" y="534" class="s">message &amp; reply text live here,</text>
+  <text x="528" y="551" class="s">not in storage</text>
+
+  <!-- circle -->
+  <rect x="508" y="616" width="264" height="74" rx="14" fill="#0E0C16" stroke="#C6FF3D" stroke-width="1.5"/>
+  <text x="528" y="646" class="t">🟢  Circle Contracts</text>
+  <text x="528" y="670" class="s">event monitors on Sent &amp; Settled</text>
+
+  <!-- ③ server panel -->
+  <rect x="928" y="120" width="320" height="552" rx="18" fill="#FF2BD6" fill-opacity=".05" stroke="#FF2BD6" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="948" y="152" class="mono" font-size="13" font-weight="700" letter-spacing="2.5" fill="#FF2BD6">③ SERVER</text>
+  <text x="948" y="172" class="s">optional · no keys · no funds</text>
+  <g>
+    <rect x="948" y="190" width="280" height="96" rx="12" fill="#0E0C16" stroke="#FF2BD6" stroke-width="1.5"/>
+    <text x="968" y="218" class="t">🛡️  API routes</text>
+    <text x="968" y="242" class="mono" font-size="11.5" fill="#FF9BEA">/api/auth · /api/me · /api/handles</text>
+    <text x="968" y="266" class="s">token checked every call · CSRF · zod</text>
+
+    <rect x="948" y="340" width="280" height="96" rx="12" fill="#0E0C16" stroke="#FF2BD6" stroke-width="1.5"/>
+    <g transform="translate(980 388)" fill="none" stroke="#FF2BD6" stroke-width="2">
+      <ellipse cx="0" cy="-14" rx="14" ry="5"/><path d="M -14 -14 V 14 A 14 5 0 0 0 14 14 V -14"/><path d="M -14 0 A 14 5 0 0 0 14 0"/>
+    </g>
+    <text x="1008" y="380" class="t">Postgres (Neon)</text>
+    <text x="1008" y="404" class="s">profiles · handles · events</text>
+
+    <rect x="948" y="490" width="280" height="86" rx="12" fill="#0E0C16" stroke="#C6FF3D" stroke-width="1.5"/>
+    <text x="968" y="520" class="t">🪝  Circle webhook</text>
+    <text x="968" y="544" class="mono" font-size="11.5" fill="#E2FF9E">/api/webhooks/circle</text>
+    <text x="968" y="564" class="s">ECDSA signature-verified</text>
+  </g>
+
+  <!-- writes: browser → contract -->
+  <g fill="none" stroke-width="2.5">
+    <path d="M 334 226 C 420 226, 420 236, 504 236" stroke="#B26BFF" class="march" marker-end="url(#aP)"/>
+    <path d="M 334 314 C 420 314, 420 300, 504 300" stroke="#B26BFF" class="march" marker-end="url(#aP)"/>
+    <path d="M 334 402 C 420 402, 420 370, 504 370" stroke="#B26BFF" class="march" marker-end="url(#aP)"/>
+    <!-- reads: contract → browser -->
+    <path d="M 506 500 C 420 500, 420 490, 338 490" stroke="#00F0FF" class="march" marker-end="url(#aC)"/>
+    <!-- emits -->
+    <path d="M 640 412 L 640 444" stroke="#00F0FF" marker-end="url(#aC)"/>
+    <!-- watched by circle -->
+    <path d="M 640 562 L 640 610" stroke="#C6FF3D" class="march" marker-end="url(#aL)"/>
+    <!-- circle → webhook -->
+    <path d="M 774 653 C 860 653, 860 533, 942 533" stroke="#C6FF3D" class="march" marker-end="url(#aL)"/>
+    <!-- webhook → db, api → db -->
+    <path d="M 1088 488 L 1088 442" stroke="#FF2BD6" marker-end="url(#aM)"/>
+    <path d="M 1088 288 L 1088 334" stroke="#FF2BD6" marker-end="url(#aM)"/>
+    <!-- privy → api (wraps under everything) -->
+    <path d="M 192 646 L 192 724 L 1262 724 L 1262 238 L 1234 238" stroke="#FF2BD6" stroke-opacity=".75" class="march" marker-end="url(#aM)"/>
+  </g>
+
+  <!-- arrow labels -->
+  <g class="mono" font-size="11.5" text-anchor="middle">
+    <text x="420" y="216" fill="#C9B8FF">send(to, msg) + USDC</text>
+    <text x="420" y="291" fill="#C9B8FF">refund · keep · batch</text>
+    <text x="420" y="371" fill="#C9B8FF">reclaim(id) · 7 days</text>
+    <text x="420" y="482" fill="#9FF7FF">views + eth_getLogs</text>
+    <text x="680" y="433" fill="#9FF7FF">emits</text>
+    <text x="700" y="594" fill="#E2FF9E">watched by</text>
+    <text x="858" y="600" fill="#E2FF9E">eventLog</text>
+    <text x="1130" y="468" fill="#FF9BEA">stores</text>
+    <text x="1130" y="316" fill="#FF9BEA">reads/writes</text>
+    <text x="400" y="714" fill="#FF9BEA">access + identity token (only for sign-in, profiles, /@handle)</text>
+  </g>
+
+  <!-- footer -->
+  <text x="640" y="760" text-anchor="middle" font-size="14" fill="#B9B3D6">💸 Money only ever moves inside <tspan fill="#00F0FF" font-weight="700">StampBox</tspan>. The server never holds keys, funds or message text.</text>
+</svg>

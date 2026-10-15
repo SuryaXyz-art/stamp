@@ -212,53 +212,40 @@ The `/developers` page in the app has a full guide, including an example agent w
 
 The contract is the product. Every stamp, payment and settlement lives on Arc, and the server never holds funds, keys or message text. A small Next.js backend adds optional extras on top: sign-in, `/@handle` profiles and settings.
 
-```mermaid
-flowchart LR
-    subgraph Browser["Web app (Next.js, wagmi/viem)"]
-      Send["/@handle · /[address]<br/>send page"]
-      Inbox["/inbox<br/>receiver"]
-      Sent["/sent<br/>sender"]
-      Receipt["/stamp/[id]<br/>receipt"]
-      Auth["Privy SDK<br/>(lazy-loaded)"]
-    end
+<div align="center">
+<img src="docs/readme/architecture.svg" alt="Stamp architecture: the web app sends, settles and reads stamps directly on the StampBox contract on Arc. Circle event monitors forward Sent and Settled events to an optional Next.js server with Postgres. The server never holds keys, funds or message text." width="100%">
+</div>
 
-    subgraph Server["Next.js route handlers (no keys, no funds)"]
-      API["/api/auth · /api/me · /api/handles<br/>Privy token verified on every call<br/>HttpOnly session + CSRF + zod"]
-      DB[("Postgres (Neon)<br/>profiles · handles · events")]
-      Hook["/api/webhooks/circle<br/>signature-verified"]
-    end
+<table>
+<tr>
+<td width="33%" valign="top">
+<h4>🟣 ① Web app</h4>
+Next.js with wagmi and viem. The send page, inbox, sent box and receipts talk <b>straight to the contract</b> from your wallet.
+</td>
+<td width="33%" valign="top">
+<h4>🔵 ② Arc L1</h4>
+<code>StampBox.sol</code> holds every stamp in escrow and settles it. Message and reply text live only in the <code>Sent</code> and <code>Settled</code> event logs.
+</td>
+<td width="33%" valign="top">
+<h4>🩷 ③ Optional server</h4>
+Sign-in, profiles and <code>/@handle</code> links, backed by Postgres. Circle event monitors feed it through a signature-verified webhook. <b>It never holds money.</b>
+</td>
+</tr>
+</table>
 
-    subgraph Arc["Arc L1 (USDC gas, sub-second finality)"]
-      Box[("StampBox.sol<br/>escrow + settlement")]
-      Logs[["Event logs<br/>Sent · Settled<br/>(message and reply text)"]]
-    end
+### 🔄 Lifecycle of a stamp
 
-    Circle["Circle Contracts<br/>event monitors"]
+<div align="center">
+<img src="docs/readme/lifecycle.svg" alt="Lifecycle of a stamp: send() creates a Pending stamp that holds the USDC. It then ends in exactly one state: Refunded when the receiver replies, Kept when the receiver marks it spam, or Reclaimed by the sender after 7 days without action." width="100%">
+</div>
 
-    Send -- "send(to, msg) + msg.value" --> Box
-    Inbox -- "refund / keep / batch" --> Box
-    Sent -- "reclaim(id) after 7 days" --> Box
-    Box -- emits --> Logs
-    Inbox & Sent & Receipt -- "views + eth_getLogs" --> Box
-    Auth -- "access + identity token" --> API
-    API --> DB
-    Logs -. watched by .-> Circle
-    Circle -- "contracts.eventLog" --> Hook
-    Hook --> DB
-```
+| | Outcome | Who triggers it | Where the USDC goes |
+|:-:|:--|:--|:--|
+| ✅ | **Refunded** | Receiver, with `refund(id, reply)` or `batchRefund` | 🟢 Back to the sender, and the reply is posted on-chain |
+| 🗑️ | **Kept** | Receiver, with `keep(id)` or `batchKeep` | 🩷 To the receiver: the spammer paid for their time |
+| ↩️ | **Reclaimed** | Sender, with `reclaim(id)`, only after 7 days | 🔵 Back to the sender |
 
-### Lifecycle of a stamp
-
-```mermaid
-stateDiagram-v2
-    [*] --> Pending: send() with msg.value ≥ price
-    Pending --> Refunded: refund(id, reply) by the receiver
-    Pending --> Kept: keep(id) by the receiver
-    Pending --> Reclaimed: reclaim(id) by the sender, after 7 days
-    Refunded --> [*]
-    Kept --> [*]
-    Reclaimed --> [*]
-```
+Every stamp starts as **⏳ Pending** and settles exactly once. After that it can never change.
 
 <details>
 <summary><b>🔧 Design notes</b> (storage, logs, stats, accounts, Circle, performance)</summary>
