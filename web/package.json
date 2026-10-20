@@ -37,20 +37,20 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
-    "@electric-sql/pglite": "0.5.8",
-    "@playwright/test": "1.64.0",
+    "@axe-core/playwright": "4.14.0",
+    "@electric-sql/pglite": "0.5.10",
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "20.19.43",
+    "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "drizzle-kit": "0.31.11",
-    "eslint": "9.39.5",
-    "eslint-config-next": "16.3.8",
-    "shadcn": "4.21.1",
+    "eslint": "10.13.0",
+    "eslint-config-next": "16.4.2",
+    "shadcn": "4.22.0",
     "tailwindcss": "4.3.3",
-    "typescript": "5.9.3",
-    "vitest": "5.0.3"
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
   },
   "packageManager": "pnpm@11.6.0"
 }
